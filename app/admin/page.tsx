@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import Link from 'next/link'
-import { ShoppingBag, Tag, Image as ImageIcon, FileText, Settings, ArrowRight } from 'lucide-react'
+import { ShoppingBag, Tag, Image as ImageIcon, FileText, Settings, ArrowRight, MessageSquare } from 'lucide-react'
 
 const QUICK_LINKS = [
   {
@@ -35,6 +35,13 @@ const QUICK_LINKS = [
     description: 'Textos del home y secciones',
     icon: FileText,
     color: 'bg-yellow-50 text-yellow-600',
+  },
+  {
+    href: '/admin/encuestas',
+    label: 'Ver Encuestas',
+    description: 'Respuestas de satisfacción del cliente',
+    icon: MessageSquare,
+    color: 'bg-purple-50 text-purple-600',
   },
   {
     href: '/admin/configuracion',

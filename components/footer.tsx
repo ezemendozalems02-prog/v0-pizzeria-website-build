@@ -9,6 +9,7 @@ const navLinks = [
   { href: "/pedido-delivery", label: "Pedido Delivery" },
   { href: "/sobre-nosotros", label: "Sobre Nosotros" },
   { href: "/contacto", label: "Contacto" },
+  { href: "/encuesta", label: "Encuesta de Satisfacción" },
 ]
 
 export function Footer() {
