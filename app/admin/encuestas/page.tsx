@@ -15,7 +15,6 @@ type SortOption = 'recent' | 'best' | 'worst'
 
 interface SurveyResponse {
   id: string
-  overall_experience: RatingValue
   product_quality: RatingValue
   delivery_time: RatingValue
   service_attention: RatingValue
@@ -205,7 +204,6 @@ function DetailModal({ response, onClose }: { response: SurveyResponse; onClose:
         <div className="space-y-4">
           {[
             { label: 'Origen',              content: <OriginBadge value={response.order_origin} /> },
-            { label: 'Experiencia general', content: <RatingBadge value={response.overall_experience} /> },
             { label: 'Calidad del producto', content: <RatingBadge value={response.product_quality} /> },
             { label: 'Tiempo de entrega',   content: <RatingBadge value={response.delivery_time} /> },
             { label: 'Atención al cliente', content: <RatingBadge value={response.service_attention} /> },
@@ -254,7 +252,7 @@ export default function EncuestasAdminPage() {
       const supabase = createClient()
       const { data } = await supabase
         .from('survey_responses')
-        .select('id, overall_experience, product_quality, delivery_time, service_attention, order_origin, comment, customer_name, created_at')
+        .select('id, product_quality, delivery_time, service_attention, order_origin, comment, customer_name, created_at')
         .order('created_at', { ascending: false })
       setResponses((data as SurveyResponse[]) ?? [])
       setLoading(false)
