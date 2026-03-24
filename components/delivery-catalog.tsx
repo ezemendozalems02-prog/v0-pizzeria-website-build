@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import Image from "next/image"
 import { Search, ShoppingCart } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -175,26 +176,40 @@ function ProductCard({
   formatPrice: (price: number) => string
 }) {
   return (
-    <div className="bg-card rounded-xl border border-border p-5 flex flex-col hover:border-primary/30 transition-colors">
-      <div className="flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-serif text-lg font-semibold text-foreground">
-            {product.name}
-          </h3>
-          <span className="text-primary font-bold whitespace-nowrap">
-            {formatPrice(product.price)}
-          </span>
-        </div>
-        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          {product.description}
-        </p>
+    <div className="bg-card rounded-xl border border-border overflow-hidden flex flex-col hover:border-primary/30 transition-colors group">
+      {/* Product Image */}
+      <div className="relative w-full aspect-[4/3] overflow-hidden bg-muted">
+        <Image
+          src={product.image}
+          alt={product.name}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        />
       </div>
-      <Button
-        onClick={onAdd}
-        className="mt-4 w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-      >
-        Agregar
-      </Button>
+
+      {/* Product Info */}
+      <div className="p-4 flex flex-col flex-1">
+        <div className="flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-serif text-lg font-semibold text-foreground leading-tight">
+              {product.name}
+            </h3>
+            <span className="text-primary font-bold whitespace-nowrap text-sm mt-0.5">
+              {formatPrice(product.price)}
+            </span>
+          </div>
+          <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
+            {product.description}
+          </p>
+        </div>
+        <Button
+          onClick={onAdd}
+          className="mt-4 w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+        >
+          Agregar
+        </Button>
+      </div>
     </div>
   )
 }
