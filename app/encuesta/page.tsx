@@ -37,23 +37,39 @@ export default function EncuestaPage() {
 
     try {
       const supabase = createClient()
-      // Map frontend values → exact DB column names
-      const orderOriginMap: Record<string, string> = {
-        delivery: 'delivery',
-        local: 'local',
-        retiro: 'pickup',
-      }
-      const ratingMap: Record<string, string> = {
+
+      // Map frontend rating values → DB CHECK constraint values
+      // DB accepts: 'bad' | 'good' | 'excellent'
+      const ratingMap: Record<string, 'bad' | 'good' | 'excellent'> = {
         bad: 'bad',
         ok: 'good',
         good: 'excellent',
       }
 
+      // Map frontend experience values → DB CHECK constraint values
+      // DB accepts: 'delivery' | 'pickup' | 'local'
+      const originMap: Record<string, 'delivery' | 'pickup' | 'local'> = {
+        delivery: 'delivery',
+        retiro: 'pickup',
+        local: 'local',
+      }
+
+      const mappedQuality = ratingMap[ratings.quality!]
+      const mappedTime = ratingMap[ratings.time!]
+      const mappedAttention = ratingMap[ratings.attention!]
+
+      // Derive overall_experience from the average score of the three ratings
+      const scoreMap: Record<string, number> = { bad: 1, good: 2, excellent: 3 }
+      const avg = (scoreMap[mappedQuality] + scoreMap[mappedTime] + scoreMap[mappedAttention]) / 3
+      const overallExperience: 'bad' | 'good' | 'excellent' =
+        avg >= 2.5 ? 'excellent' : avg >= 1.5 ? 'good' : 'bad'
+
       const { error: insertError } = await supabase.from('survey_responses').insert({
-        order_origin: orderOriginMap[experience!] ?? experience,
-        product_quality: ratingMap[ratings.quality!] ?? ratings.quality,
-        delivery_time: ratingMap[ratings.time!] ?? ratings.time,
-        service_attention: ratingMap[ratings.attention!] ?? ratings.attention,
+        order_origin: originMap[experience!],
+        product_quality: mappedQuality,
+        delivery_time: mappedTime,
+        service_attention: mappedAttention,
+        overall_experience: overallExperience,
         comment: comment.trim() || null,
       })
 

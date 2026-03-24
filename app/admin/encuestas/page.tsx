@@ -6,13 +6,16 @@ import { X } from 'lucide-react'
 
 /* ─── Types ─────────────────────────────────────────── */
 
-type RatingValue = 'bad' | 'ok' | 'good' | null
-type OrderOrigin = 'delivery' | 'local' | 'retiro' | null
+// DB CHECK values: 'bad' | 'good' | 'excellent'
+type RatingValue = 'bad' | 'good' | 'excellent' | null
+// DB CHECK values: 'delivery' | 'pickup' | 'local'
+type OrderOrigin = 'delivery' | 'pickup' | 'local' | null
 type TimeFilter = 'today' | 'week' | 'all'
 type SortOption = 'recent' | 'best' | 'worst'
 
 interface SurveyResponse {
   id: string
+  overall_experience: RatingValue
   product_quality: RatingValue
   delivery_time: RatingValue
   service_attention: RatingValue
@@ -24,7 +27,7 @@ interface SurveyResponse {
 
 /* ─── Helpers ────────────────────────────────────────── */
 
-const RATING_SCORE: Record<string, number> = { bad: 1, ok: 2, good: 3 }
+const RATING_SCORE: Record<string, number> = { bad: 1, good: 2, excellent: 3 }
 
 function avgScore(r: SurveyResponse): number {
   const vals = [r.product_quality, r.delivery_time, r.service_attention]
@@ -50,7 +53,7 @@ function avgNum(responses: SurveyResponse[], key: keyof SurveyResponse): number 
 const ORIGIN_LABELS: Record<string, string> = {
   delivery: 'Delivery',
   local: 'En el local',
-  retiro: 'Retiro',
+  pickup: 'Retiro',
 }
 
 function formatDate(iso: string) {
@@ -73,9 +76,9 @@ function formatTime(iso: string) {
 function RatingBadge({ value }: { value: RatingValue }) {
   if (!value) return <span className="text-[#243329]/25 text-xs">—</span>
   const map: Record<string, { label: string; cls: string }> = {
-    bad:  { label: 'Mala',      cls: 'bg-[#C4322B]/8 text-[#C4322B] border border-[#C4322B]/20' },
-    ok:   { label: 'Normal',    cls: 'bg-[#243329]/6 text-[#243329]/60 border border-[#243329]/15' },
-    good: { label: 'Muy buena', cls: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' },
+    bad:       { label: 'Mala',      cls: 'bg-[#C4322B]/8 text-[#C4322B] border border-[#C4322B]/20' },
+    good:      { label: 'Normal',    cls: 'bg-[#243329]/6 text-[#243329]/60 border border-[#243329]/15' },
+    excellent: { label: 'Muy buena', cls: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' },
   }
   const { label, cls } = map[value]
   return (
@@ -90,7 +93,7 @@ function OriginBadge({ value }: { value: OrderOrigin }) {
   const map: Record<string, string> = {
     delivery: 'bg-[#F5EFE8] text-[#243329]/70 border border-[#243329]/15',
     local:    'bg-[#F5EFE8] text-[#243329]/70 border border-[#243329]/15',
-    retiro:   'bg-[#F5EFE8] text-[#243329]/70 border border-[#243329]/15',
+    pickup:   'bg-[#F5EFE8] text-[#243329]/70 border border-[#243329]/15',
   }
   return (
     <span className={`inline-block text-[11px] font-medium px-2.5 py-[3px] rounded-full whitespace-nowrap ${map[value]}`}>
@@ -201,9 +204,10 @@ function DetailModal({ response, onClose }: { response: SurveyResponse; onClose:
         {/* Fields */}
         <div className="space-y-4">
           {[
-            { label: 'Experiencia', content: <OriginBadge value={response.order_origin} /> },
+            { label: 'Origen',              content: <OriginBadge value={response.order_origin} /> },
+            { label: 'Experiencia general', content: <RatingBadge value={response.overall_experience} /> },
             { label: 'Calidad del producto', content: <RatingBadge value={response.product_quality} /> },
-            { label: 'Tiempo de entrega', content: <RatingBadge value={response.delivery_time} /> },
+            { label: 'Tiempo de entrega',   content: <RatingBadge value={response.delivery_time} /> },
             { label: 'Atención al cliente', content: <RatingBadge value={response.service_attention} /> },
           ].map(({ label, content }) => (
             <div key={label} className="flex items-center justify-between">
@@ -250,7 +254,7 @@ export default function EncuestasAdminPage() {
       const supabase = createClient()
       const { data } = await supabase
         .from('survey_responses')
-        .select('id, product_quality, delivery_time, service_attention, order_origin, comment, customer_name, created_at')
+        .select('id, overall_experience, product_quality, delivery_time, service_attention, order_origin, comment, customer_name, created_at')
         .order('created_at', { ascending: false })
       setResponses((data as SurveyResponse[]) ?? [])
       setLoading(false)
@@ -300,10 +304,10 @@ export default function EncuestasAdminPage() {
     filterAttention !== 'all' || filterComment || dateExact || sortBy !== 'recent'
 
   const RATING_OPTIONS = [
-    { value: 'all', label: 'Todas' },
-    { value: 'bad', label: 'Mala' },
-    { value: 'ok', label: 'Normal' },
-    { value: 'good', label: 'Muy buena' },
+    { value: 'all',       label: 'Todas' },
+    { value: 'bad',       label: 'Mala' },
+    { value: 'good',      label: 'Normal' },
+    { value: 'excellent', label: 'Muy buena' },
   ]
 
   const TABLE_COLS = ['Fecha', 'Hora', 'Origen', 'Calidad', 'Tiempo', 'Atención', 'Comentario']
@@ -351,10 +355,10 @@ export default function EncuestasAdminPage() {
               value={filterOrigin}
               onChange={setFilterOrigin}
               options={[
-                { value: 'all', label: 'Todos' },
+                { value: 'all',      label: 'Todos' },
                 { value: 'delivery', label: 'Delivery' },
-                { value: 'local', label: 'En el local' },
-                { value: 'retiro', label: 'Retiro' },
+                { value: 'local',    label: 'En el local' },
+                { value: 'pickup',   label: 'Retiro' },
               ]}
             />
             <FilterSelect label="Calidad" value={filterQuality} onChange={setFilterQuality} options={RATING_OPTIONS} />
