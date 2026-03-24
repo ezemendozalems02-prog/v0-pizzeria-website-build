@@ -91,6 +91,23 @@
   }
 }
 
+/* Admin panel tokens */
+:root {
+  --admin-bg: oklch(0.97 0.003 250);
+  --admin-border: oklch(0.91 0.005 250);
+  --admin-text: oklch(0.18 0.015 250);
+  --admin-muted: oklch(0.52 0.01 250);
+  --admin-card: oklch(1 0 0);
+}
+
+@theme inline {
+  --color-admin-bg: var(--admin-bg);
+  --color-admin-border: var(--admin-border);
+  --color-admin-text: var(--admin-text);
+  --color-admin-muted: var(--admin-muted);
+  --color-admin-card: var(--admin-card);
+}
+
 /* Custom scrollbar for cart */
 .cart-scrollbar::-webkit-scrollbar {
   width: 6px;

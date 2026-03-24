@@ -1,5 +1,8 @@
+"use client"
+
 import Link from "next/link"
 import { Instagram, MessageCircle } from "lucide-react"
+import { useStore } from "@/lib/store"
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -9,6 +12,8 @@ const navLinks = [
 ]
 
 export function Footer() {
+  const { config } = useStore()
+
   return (
     <footer className="bg-secondary text-secondary-foreground">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
@@ -21,16 +26,13 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-3 text-secondary-foreground/80 text-sm leading-relaxed">
-              Pizza napolitana con identidad de barrio. Ingredientes de calidad y
-              fermentación cuidada.
+              {config.footerText}
             </p>
           </div>
 
           {/* Navigation */}
           <div>
-            <h3 className="font-medium text-primary-foreground mb-4">
-              Navegación
-            </h3>
+            <h3 className="font-medium text-primary-foreground mb-4">Navegación</h3>
             <nav className="flex flex-col gap-2">
               {navLinks.map((link) => (
                 <Link
@@ -46,34 +48,34 @@ export function Footer() {
 
           {/* Contact & Social */}
           <div>
-            <h3 className="font-medium text-primary-foreground mb-4">
-              Contacto
-            </h3>
-            <div className="space-y-2 text-sm text-secondary-foreground/80">
-              <p>Balbín 2916</p>
-              <p>El Palomar, Buenos Aires</p>
-              <p className="mt-3">Martes a Domingo</p>
-              <p>20:00 — 23:30</p>
+            <h3 className="font-medium text-primary-foreground mb-4">Contacto</h3>
+            <div className="flex flex-col gap-1 text-sm text-secondary-foreground/80">
+              <p>{config.address}</p>
+              <p className="mt-2 whitespace-pre-line">{config.hours}</p>
             </div>
             <div className="flex gap-4 mt-4">
-              <a
-                href="https://instagram.com/totore"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-secondary-foreground/10 flex items-center justify-center hover:bg-primary transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a
-                href="https://wa.me/5491112345678"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-secondary-foreground/10 flex items-center justify-center hover:bg-primary transition-colors"
-                aria-label="WhatsApp"
-              >
-                <MessageCircle className="w-5 h-5" />
-              </a>
+              {config.instagram && (
+                <a
+                  href={config.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-full bg-secondary-foreground/10 flex items-center justify-center hover:bg-primary transition-colors"
+                  aria-label="Instagram"
+                >
+                  <Instagram className="w-5 h-5" />
+                </a>
+              )}
+              {config.whatsapp && (
+                <a
+                  href={`https://wa.me/${config.whatsapp}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-full bg-secondary-foreground/10 flex items-center justify-center hover:bg-primary transition-colors"
+                  aria-label="WhatsApp"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -86,7 +88,7 @@ export function Footer() {
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-primary"></span>
               <span className="text-xs text-secondary-foreground/60">
-                Delivery desde las 20
+                {config.hours.split("\n")[0] || "Delivery desde las 20"}
               </span>
             </div>
           </div>

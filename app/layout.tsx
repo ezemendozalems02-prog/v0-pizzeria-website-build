@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { CartProvider } from '@/lib/cart-context'
+import { StoreProvider } from '@/lib/store'
 import { Header } from '@/components/header'
 import { CartDrawer } from '@/components/cart-drawer'
 import { AddedToast } from '@/components/added-toast'
@@ -57,15 +58,17 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`}>
-        <CartProvider>
-          <Header />
-          <CartDrawer />
-          <AddedToast />
-          <main className="min-h-screen pt-16">
-            {children}
-          </main>
-          <Footer />
-        </CartProvider>
+        <StoreProvider>
+          <CartProvider>
+            <Header />
+            <CartDrawer />
+            <AddedToast />
+            <main className="min-h-screen pt-16">
+              {children}
+            </main>
+            <Footer />
+          </CartProvider>
+        </StoreProvider>
         <Analytics />
       </body>
     </html>

@@ -6,12 +6,21 @@ import { Search, ShoppingCart } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/lib/cart-context"
-import { products, categories, type CategoryId, type Product } from "@/lib/products"
+import { useStore } from "@/lib/store"
+import { categories as staticCategories, type CategoryId, type Product } from "@/lib/products"
 
 export function DeliveryCatalog() {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeCategory, setActiveCategory] = useState<CategoryId>("todas")
   const { addItem, setIsCartOpen, totalItems } = useCart()
+  const { products: storeProducts, categories: storeCategories } = useStore()
+
+  // Use active products from store, fall back gracefully
+  const products = storeProducts.filter((p) => p.active)
+  const categories = [
+    { id: "todas", label: "Todas" },
+    ...storeCategories,
+  ]
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -22,10 +31,20 @@ export function DeliveryCatalog() {
         activeCategory === "todas" || product.category === activeCategory
       return matchesSearch && matchesCategory
     })
-  }, [searchQuery, activeCategory])
+  }, [searchQuery, activeCategory, products])
 
-  const pizzas = filteredProducts.filter((p) => p.category === "pizzas")
-  const bebidas = filteredProducts.filter((p) => p.category === "bebidas")
+  // Group by category dynamically
+  const grouped = useMemo(() => {
+    const map: Record<string, typeof products> = {}
+    for (const p of filteredProducts) {
+      if (!map[p.category]) map[p.category] = []
+      map[p.category].push(p)
+    }
+    return map
+  }, [filteredProducts])
+
+  const pizzas = grouped["pizzas"] ?? []
+  const bebidas = grouped["bebidas"] ?? []
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("es-AR", {
