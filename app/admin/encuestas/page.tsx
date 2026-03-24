@@ -13,12 +13,12 @@ type SortOption = 'recent' | 'best' | 'worst'
 
 interface SurveyResponse {
   id: string
-  quality: RatingValue
-  time: RatingValue
-  attention: RatingValue
-  experience: OrderOrigin
+  product_quality: RatingValue
+  delivery_time: RatingValue
+  service_attention: RatingValue
+  order_origin: OrderOrigin
   comment: string | null
-  name: string | null
+  customer_name: string | null
   created_at: string
 }
 
@@ -27,7 +27,7 @@ interface SurveyResponse {
 const RATING_SCORE: Record<string, number> = { bad: 1, ok: 2, good: 3 }
 
 function avgScore(r: SurveyResponse): number {
-  const vals = [r.quality, r.time, r.attention]
+  const vals = [r.product_quality, r.delivery_time, r.service_attention]
     .filter(Boolean)
     .map((v) => RATING_SCORE[v as string] ?? 0)
   return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0
@@ -181,7 +181,7 @@ function DetailModal({ response, onClose }: { response: SurveyResponse; onClose:
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#243329]/40 mb-1">Respuesta</p>
             <p className="font-serif text-xl font-bold text-[#243329]">
-              {response.name || 'Anónimo'}
+              {response.customer_name || 'Anónimo'}
             </p>
             <p className="text-xs text-[#243329]/40 mt-0.5">
               {formatDate(response.created_at)} · {formatTime(response.created_at)}
@@ -201,10 +201,10 @@ function DetailModal({ response, onClose }: { response: SurveyResponse; onClose:
         {/* Fields */}
         <div className="space-y-4">
           {[
-            { label: 'Experiencia', content: <OriginBadge value={response.experience} /> },
-            { label: 'Calidad del producto', content: <RatingBadge value={response.quality} /> },
-            { label: 'Tiempo de entrega', content: <RatingBadge value={response.time} /> },
-            { label: 'Atención al cliente', content: <RatingBadge value={response.attention} /> },
+            { label: 'Experiencia', content: <OriginBadge value={response.order_origin} /> },
+            { label: 'Calidad del producto', content: <RatingBadge value={response.product_quality} /> },
+            { label: 'Tiempo de entrega', content: <RatingBadge value={response.delivery_time} /> },
+            { label: 'Atención al cliente', content: <RatingBadge value={response.service_attention} /> },
           ].map(({ label, content }) => (
             <div key={label} className="flex items-center justify-between">
               <span className="text-xs text-[#243329]/50">{label}</span>
@@ -247,10 +247,10 @@ export default function EncuestasAdminPage() {
 
   useEffect(() => {
     const load = async () => {
-      const supabase = await createClient()
+      const supabase = createClient()
       const { data } = await supabase
         .from('survey_responses')
-        .select('id, quality, time, attention, experience, comment, name, created_at')
+        .select('id, product_quality, delivery_time, service_attention, order_origin, comment, customer_name, created_at')
         .order('created_at', { ascending: false })
       setResponses((data as SurveyResponse[]) ?? [])
       setLoading(false)
@@ -275,8 +275,8 @@ export default function EncuestasAdminPage() {
   // Stats from time-filtered
   const stats = useMemo(() => ({
     total: timeFiltered.length,
-    delivery: timeFiltered.filter((r) => r.experience === 'delivery').length,
-    local: timeFiltered.filter((r) => r.experience === 'local' || r.experience === 'retiro').length,
+    delivery: timeFiltered.filter((r) => r.order_origin === 'delivery').length,
+    local: timeFiltered.filter((r) => r.order_origin === 'local' || r.order_origin === 'retiro').length,
     avgGeneral: timeFiltered.length
       ? timeFiltered.reduce((acc, r) => acc + avgScore(r), 0) / timeFiltered.length
       : 0,
@@ -285,10 +285,10 @@ export default function EncuestasAdminPage() {
   // Apply advanced filters
   const filtered = useMemo(() => {
     let list = [...timeFiltered]
-    if (filterOrigin !== 'all') list = list.filter((r) => r.experience === filterOrigin)
-    if (filterQuality !== 'all') list = list.filter((r) => r.quality === filterQuality)
-    if (filterTime !== 'all') list = list.filter((r) => r.time === filterTime)
-    if (filterAttention !== 'all') list = list.filter((r) => r.attention === filterAttention)
+    if (filterOrigin !== 'all') list = list.filter((r) => r.order_origin === filterOrigin)
+    if (filterQuality !== 'all') list = list.filter((r) => r.product_quality === filterQuality)
+    if (filterTime !== 'all') list = list.filter((r) => r.delivery_time === filterTime)
+    if (filterAttention !== 'all') list = list.filter((r) => r.service_attention === filterAttention)
     if (filterComment) list = list.filter((r) => r.comment?.toLowerCase().includes(filterComment.toLowerCase()))
     if (dateExact) list = list.filter((r) => formatDate(r.created_at) === formatDate(dateExact + 'T00:00:00'))
     if (sortBy === 'best') list.sort((a, b) => avgScore(b) - avgScore(a))
@@ -461,16 +461,16 @@ export default function EncuestasAdminPage() {
                         {formatTime(r.created_at)}
                       </td>
                       <td className="px-5 py-3.5">
-                        <OriginBadge value={r.experience} />
+                        <OriginBadge value={r.order_origin} />
                       </td>
                       <td className="px-5 py-3.5">
-                        <RatingBadge value={r.quality} />
+                        <RatingBadge value={r.product_quality} />
                       </td>
                       <td className="px-5 py-3.5">
-                        <RatingBadge value={r.time} />
+                        <RatingBadge value={r.delivery_time} />
                       </td>
                       <td className="px-5 py-3.5">
-                        <RatingBadge value={r.attention} />
+                        <RatingBadge value={r.service_attention} />
                       </td>
                       <td className="px-5 py-3.5 max-w-[200px]">
                         {r.comment ? (

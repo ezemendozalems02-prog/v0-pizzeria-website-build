@@ -46,7 +46,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
     const checkAuth = async () => {
       try {
-        const supabase = await createClient()
+        const supabase = createClient()
         const {
           data: { user },
         } = await supabase.auth.getUser()
@@ -73,7 +73,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   async function handleLogout() {
     try {
-      const supabase = await createClient()
+      const supabase = createClient()
       await supabase.auth.signOut()
       router.push("/admin/login")
     } catch (error) {

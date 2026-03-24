@@ -27,7 +27,7 @@ export function useAdminStore() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const supabase = await createClient()
+        const supabase = createClient()
 
         const [productsRes, categoriesRes, bannersRes, contentRes, configRes] = await Promise.all([
           supabase.from('products').select('*').eq('active', true),

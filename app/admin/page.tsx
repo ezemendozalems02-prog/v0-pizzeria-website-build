@@ -62,7 +62,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const supabase = await createClient()
+        const supabase = createClient()
 
         const [productsRes, categoriesRes] = await Promise.all([
           supabase.from('products').select('id').eq('active', true),

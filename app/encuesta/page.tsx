@@ -36,12 +36,24 @@ export default function EncuestaPage() {
     setError(null)
 
     try {
-      const supabase = await createClient()
+      const supabase = createClient()
+      // Map frontend values → exact DB column names
+      const orderOriginMap: Record<string, string> = {
+        delivery: 'delivery',
+        local: 'local',
+        retiro: 'pickup',
+      }
+      const ratingMap: Record<string, string> = {
+        bad: 'bad',
+        ok: 'good',
+        good: 'excellent',
+      }
+
       const { error: insertError } = await supabase.from('survey_responses').insert({
-        experience,
-        quality_rating: ratings.quality,
-        time_rating: ratings.time,
-        attention_rating: ratings.attention,
+        order_origin: orderOriginMap[experience!] ?? experience,
+        product_quality: ratingMap[ratings.quality!] ?? ratings.quality,
+        delivery_time: ratingMap[ratings.time!] ?? ratings.time,
+        service_attention: ratingMap[ratings.attention!] ?? ratings.attention,
         comment: comment.trim() || null,
       })
 
