@@ -2,12 +2,14 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { MessageSquare, ChevronDown, X, Clock } from 'lucide-react'
+import { X } from 'lucide-react'
 
 /* ─── Types ─────────────────────────────────────────── */
 
 type RatingValue = 'bad' | 'ok' | 'good' | null
 type OrderOrigin = 'delivery' | 'local' | 'retiro' | null
+type TimeFilter = 'today' | 'week' | 'all'
+type SortOption = 'recent' | 'best' | 'worst'
 
 interface SurveyResponse {
   id: string
@@ -19,8 +21,6 @@ interface SurveyResponse {
   name: string | null
   created_at: string
 }
-
-type SortOption = 'recent' | 'best' | 'worst'
 
 /* ─── Helpers ────────────────────────────────────────── */
 
@@ -34,17 +34,17 @@ function avgScore(r: SurveyResponse): number {
 }
 
 function avgLabel(value: number): string {
+  if (!value) return '—'
   if (value >= 2.5) return 'Muy buena'
   if (value >= 1.5) return 'Normal'
   return 'Mala'
 }
 
-function timeAgo(date: string): string {
-  const diff = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
-  if (diff < 60) return 'hace menos de un minuto'
-  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`
-  if (diff < 86400) return `hace ${Math.floor(diff / 3600)} hs`
-  return `hace ${Math.floor(diff / 86400)} días`
+function avgNum(responses: SurveyResponse[], key: keyof SurveyResponse): number {
+  const vals = responses
+    .map((r) => RATING_SCORE[(r[key] as string) ?? ''] ?? 0)
+    .filter(Boolean)
+  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0
 }
 
 const ORIGIN_LABELS: Record<string, string> = {
@@ -53,119 +53,170 @@ const ORIGIN_LABELS: Record<string, string> = {
   retiro: 'Retiro',
 }
 
-/* ─── Sub-components ─────────────────────────────────── */
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+  })
+}
+
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('es-AR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+/* ─── Badges ─────────────────────────────────────────── */
 
 function RatingBadge({ value }: { value: RatingValue }) {
-  if (!value) return <span className="text-admin-muted text-xs">—</span>
-
-  const styles: Record<string, string> = {
-    bad: 'bg-red-50 text-red-600 border border-red-200',
-    ok: 'bg-gray-100 text-gray-600 border border-gray-200',
-    good: 'bg-green-50 text-green-700 border border-green-200',
+  if (!value) return <span className="text-[#243329]/25 text-xs">—</span>
+  const map: Record<string, { label: string; cls: string }> = {
+    bad:  { label: 'Mala',      cls: 'bg-[#C4322B]/8 text-[#C4322B] border border-[#C4322B]/20' },
+    ok:   { label: 'Normal',    cls: 'bg-[#243329]/6 text-[#243329]/60 border border-[#243329]/15' },
+    good: { label: 'Muy buena', cls: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' },
   }
-  const labels: Record<string, string> = {
-    bad: 'Mala',
-    ok: 'Normal',
-    good: 'Muy buena',
-  }
-
+  const { label, cls } = map[value]
   return (
-    <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${styles[value]}`}>
-      {labels[value]}
+    <span className={`inline-block text-[11px] font-medium px-2.5 py-[3px] rounded-full whitespace-nowrap ${cls}`}>
+      {label}
     </span>
   )
 }
 
 function OriginBadge({ value }: { value: OrderOrigin }) {
-  if (!value) return <span className="text-admin-muted text-xs">—</span>
-  const styles: Record<string, string> = {
-    delivery: 'bg-blue-50 text-blue-700 border border-blue-200',
-    local: 'bg-amber-50 text-amber-700 border border-amber-200',
-    retiro: 'bg-purple-50 text-purple-700 border border-purple-200',
+  if (!value) return <span className="text-[#243329]/25 text-xs">—</span>
+  const map: Record<string, string> = {
+    delivery: 'bg-[#F5EFE8] text-[#243329]/70 border border-[#243329]/15',
+    local:    'bg-[#F5EFE8] text-[#243329]/70 border border-[#243329]/15',
+    retiro:   'bg-[#F5EFE8] text-[#243329]/70 border border-[#243329]/15',
   }
   return (
-    <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${styles[value]}`}>
-      {ORIGIN_LABELS[value] ?? value}
+    <span className={`inline-block text-[11px] font-medium px-2.5 py-[3px] rounded-full whitespace-nowrap ${map[value]}`}>
+      {ORIGIN_LABELS[value]}
     </span>
   )
 }
 
-function StatCard({
-  label,
-  value,
-  sub,
-}: {
-  label: string
-  value: string | number
-  sub?: string
-}) {
+/* ─── Stat Card ──────────────────────────────────────── */
+
+function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="bg-white border border-admin-border rounded-xl p-5">
-      <p className="text-xs text-admin-muted uppercase tracking-wide mb-2">{label}</p>
-      <p className="text-3xl font-bold text-admin-text">{value}</p>
-      {sub && <p className="text-xs text-admin-muted mt-1">{sub}</p>}
+    <div className="bg-white border border-[#243329]/10 rounded-2xl px-6 py-5">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#243329]/40 mb-3">{label}</p>
+      <p className="font-serif text-3xl font-bold text-[#243329] leading-none">{value}</p>
+      {sub && <p className="text-xs text-[#243329]/40 mt-2">{sub}</p>}
     </div>
   )
 }
 
-function ResponseModal({
-  response,
-  onClose,
+/* ─── Filter Pill ────────────────────────────────────── */
+
+function FilterPill({
+  active,
+  onClick,
+  children,
 }: {
-  response: SurveyResponse
-  onClose: () => void
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
 }) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
-      onClick={onClose}
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
+        active
+          ? 'bg-[#C4322B] text-white border-[#C4322B]'
+          : 'bg-[#F5EFE8] text-[#243329]/60 border-[#243329]/15 hover:border-[#243329]/30 hover:text-[#243329]'
+      }`}
     >
+      {children}
+    </button>
+  )
+}
+
+/* ─── Filter Select ──────────────────────────────────── */
+
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 min-w-[130px]">
+      <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#243329]/40">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-9 px-3 pr-8 text-sm border border-[#243329]/15 rounded-xl bg-[#F5EFE8]/60 text-[#243329] appearance-none focus:outline-none focus:ring-1 focus:ring-[#C4322B]/30 transition-all"
+        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23243329' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+/* ─── Detail Modal ───────────────────────────────────── */
+
+function DetailModal({ response, onClose }: { response: SurveyResponse; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#243329]/30 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-7 border border-[#243329]/8"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Modal header */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <p className="font-semibold text-admin-text text-lg">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#243329]/40 mb-1">Respuesta</p>
+            <p className="font-serif text-xl font-bold text-[#243329]">
               {response.name || 'Anónimo'}
             </p>
-            <p className="text-xs text-admin-muted mt-0.5">
-              {new Date(response.created_at).toLocaleString('es-AR', {
-                dateStyle: 'long',
-                timeStyle: 'short',
-              })}
+            <p className="text-xs text-[#243329]/40 mt-0.5">
+              {formatDate(response.created_at)} · {formatTime(response.created_at)}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-admin-muted hover:text-admin-text transition-colors p-1 rounded-lg hover:bg-admin-bg"
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-[#F5EFE8] text-[#243329]/50 hover:text-[#243329] transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
+        {/* Divider */}
+        <div className="h-px bg-[#243329]/8 mb-6" />
+
+        {/* Fields */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b border-admin-border">
-            <span className="text-sm text-admin-muted">Experiencia</span>
-            <OriginBadge value={response.experience} />
-          </div>
-          <div className="flex items-center justify-between py-3 border-b border-admin-border">
-            <span className="text-sm text-admin-muted">Calidad</span>
-            <RatingBadge value={response.quality} />
-          </div>
-          <div className="flex items-center justify-between py-3 border-b border-admin-border">
-            <span className="text-sm text-admin-muted">Tiempo</span>
-            <RatingBadge value={response.time} />
-          </div>
-          <div className="flex items-center justify-between py-3 border-b border-admin-border">
-            <span className="text-sm text-admin-muted">Atención</span>
-            <RatingBadge value={response.attention} />
-          </div>
+          {[
+            { label: 'Experiencia', content: <OriginBadge value={response.experience} /> },
+            { label: 'Calidad del producto', content: <RatingBadge value={response.quality} /> },
+            { label: 'Tiempo de entrega', content: <RatingBadge value={response.time} /> },
+            { label: 'Atención al cliente', content: <RatingBadge value={response.attention} /> },
+          ].map(({ label, content }) => (
+            <div key={label} className="flex items-center justify-between">
+              <span className="text-xs text-[#243329]/50">{label}</span>
+              {content}
+            </div>
+          ))}
+
           {response.comment && (
-            <div className="pt-2">
-              <p className="text-xs text-admin-muted uppercase tracking-wide mb-2">Comentario</p>
-              <p className="text-sm text-admin-text leading-relaxed bg-admin-bg rounded-xl p-4">
-                "{response.comment}"
+            <div className="mt-4 pt-4 border-t border-[#243329]/8">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#243329]/40 mb-2">Comentario</p>
+              <p className="text-sm text-[#243329]/80 leading-relaxed bg-[#F5EFE8] rounded-xl px-4 py-3">
+                &ldquo;{response.comment}&rdquo;
               </p>
             </div>
           )}
@@ -181,16 +232,21 @@ export default function EncuestasAdminPage() {
   const [responses, setResponses] = useState<SurveyResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<SurveyResponse | null>(null)
-  const [expandedComment, setExpandedComment] = useState<string | null>(null)
 
-  // Filters
-  const [filterOrigin, setFilterOrigin] = useState<string>('all')
+  // Quick time filter
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('all')
+
+  // Advanced filters
+  const [filterOrigin, setFilterOrigin] = useState('all')
+  const [filterQuality, setFilterQuality] = useState('all')
+  const [filterTime, setFilterTime] = useState('all')
+  const [filterAttention, setFilterAttention] = useState('all')
+  const [filterComment, setFilterComment] = useState('')
+  const [dateExact, setDateExact] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('recent')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
 
   useEffect(() => {
-    const fetch = async () => {
+    const load = async () => {
       const supabase = await createClient()
       const { data } = await supabase
         .from('survey_responses')
@@ -199,247 +255,231 @@ export default function EncuestasAdminPage() {
       setResponses((data as SurveyResponse[]) ?? [])
       setLoading(false)
     }
-    fetch()
+    load()
   }, [])
 
-  // Stats
-  const stats = useMemo(() => {
-    if (!responses.length) return { total: 0, avgQuality: 0, avgTime: 0, avgAttention: 0 }
-    const avg = (key: keyof SurveyResponse) => {
-      const vals = responses
-        .map((r) => RATING_SCORE[(r[key] as string) ?? ''] ?? 0)
-        .filter(Boolean)
-      return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0
+  // Apply time filter first
+  const timeFiltered = useMemo(() => {
+    const now = new Date()
+    if (timeFilter === 'today') {
+      const today = now.toDateString()
+      return responses.filter((r) => new Date(r.created_at).toDateString() === today)
     }
-    return {
-      total: responses.length,
-      avgQuality: avg('quality'),
-      avgTime: avg('time'),
-      avgAttention: avg('attention'),
+    if (timeFilter === 'week') {
+      const cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      return responses.filter((r) => new Date(r.created_at) >= cutoff)
     }
-  }, [responses])
+    return responses
+  }, [responses, timeFilter])
 
-  const lastResponse = responses[0]
+  // Stats from time-filtered
+  const stats = useMemo(() => ({
+    total: timeFiltered.length,
+    delivery: timeFiltered.filter((r) => r.experience === 'delivery').length,
+    local: timeFiltered.filter((r) => r.experience === 'local' || r.experience === 'retiro').length,
+    avgGeneral: timeFiltered.length
+      ? timeFiltered.reduce((acc, r) => acc + avgScore(r), 0) / timeFiltered.length
+      : 0,
+  }), [timeFiltered])
 
-  // Filtered & sorted
+  // Apply advanced filters
   const filtered = useMemo(() => {
-    let list = [...responses]
+    let list = [...timeFiltered]
     if (filterOrigin !== 'all') list = list.filter((r) => r.experience === filterOrigin)
-    if (dateFrom) list = list.filter((r) => new Date(r.created_at) >= new Date(dateFrom))
-    if (dateTo) list = list.filter((r) => new Date(r.created_at) <= new Date(dateTo + 'T23:59:59'))
+    if (filterQuality !== 'all') list = list.filter((r) => r.quality === filterQuality)
+    if (filterTime !== 'all') list = list.filter((r) => r.time === filterTime)
+    if (filterAttention !== 'all') list = list.filter((r) => r.attention === filterAttention)
+    if (filterComment) list = list.filter((r) => r.comment?.toLowerCase().includes(filterComment.toLowerCase()))
+    if (dateExact) list = list.filter((r) => formatDate(r.created_at) === formatDate(dateExact + 'T00:00:00'))
     if (sortBy === 'best') list.sort((a, b) => avgScore(b) - avgScore(a))
     else if (sortBy === 'worst') list.sort((a, b) => avgScore(a) - avgScore(b))
     return list
-  }, [responses, filterOrigin, sortBy, dateFrom, dateTo])
+  }, [timeFiltered, filterOrigin, filterQuality, filterTime, filterAttention, filterComment, dateExact, sortBy])
+
+  const hasActiveFilters = filterOrigin !== 'all' || filterQuality !== 'all' || filterTime !== 'all' ||
+    filterAttention !== 'all' || filterComment || dateExact || sortBy !== 'recent'
+
+  const RATING_OPTIONS = [
+    { value: 'all', label: 'Todas' },
+    { value: 'bad', label: 'Mala' },
+    { value: 'ok', label: 'Normal' },
+    { value: 'good', label: 'Muy buena' },
+  ]
+
+  const TABLE_COLS = ['Fecha', 'Hora', 'Origen', 'Calidad', 'Tiempo', 'Atención', 'Comentario']
 
   return (
     <>
-      <div className="max-w-6xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-admin-text mb-1">Encuestas de satisfacción</h1>
-          <p className="text-sm text-admin-muted">Visualizá el feedback de tus clientes en tiempo real</p>
+      <div className="max-w-7xl space-y-8">
+
+        {/* ── Header ── */}
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#243329]/35 mb-2">
+            Panel interno
+          </p>
+          <h1 className="font-serif text-4xl font-bold text-[#243329] leading-tight">
+            Encuesta de satisfacción
+          </h1>
         </div>
 
-        {/* Last response banner */}
-        {lastResponse && (
-          <div className="flex items-center gap-2 text-sm text-admin-muted bg-white border border-admin-border rounded-xl px-4 py-3 mb-6">
-            <Clock className="w-4 h-4 text-green-500 flex-shrink-0" />
-            Última respuesta recibida{' '}
-            <span className="font-medium text-admin-text">{timeAgo(lastResponse.created_at)}</span>
-          </div>
-        )}
+        {/* ── Quick time filters ── */}
+        <div className="flex gap-2">
+          <FilterPill active={timeFilter === 'today'} onClick={() => setTimeFilter('today')}>Hoy</FilterPill>
+          <FilterPill active={timeFilter === 'week'} onClick={() => setTimeFilter('week')}>Últimos 7 días</FilterPill>
+          <FilterPill active={timeFilter === 'all'} onClick={() => setTimeFilter('all')}>Todo</FilterPill>
+        </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Total respuestas" value={stats.total} />
+        {/* ── Metric Cards ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard label="Total respuestas" value={loading ? '—' : stats.total} />
+          <StatCard label="Delivery" value={loading ? '—' : stats.delivery} />
           <StatCard
-            label="Calidad promedio"
-            value={stats.total ? avgLabel(stats.avgQuality) : '—'}
+            label="Local / Retiro"
+            value={loading ? '—' : stats.local}
           />
           <StatCard
-            label="Tiempo promedio"
-            value={stats.total ? avgLabel(stats.avgTime) : '—'}
-          />
-          <StatCard
-            label="Atención promedio"
-            value={stats.total ? avgLabel(stats.avgAttention) : '—'}
+            label="Promedio general"
+            value={loading ? '—' : avgLabel(stats.avgGeneral)}
           />
         </div>
 
-        {/* Filters */}
-        <div className="bg-white border border-admin-border rounded-xl p-4 mb-6 flex flex-wrap gap-3 items-end">
-          {/* Origin filter */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-admin-muted uppercase tracking-wide">Experiencia</label>
-            <div className="relative">
-              <select
-                value={filterOrigin}
-                onChange={(e) => setFilterOrigin(e.target.value)}
-                className="h-9 pl-3 pr-8 text-sm border border-admin-border rounded-lg bg-admin-bg text-admin-text appearance-none focus:outline-none focus:ring-1 focus:ring-primary/40"
-              >
-                <option value="all">Todas</option>
-                <option value="delivery">Delivery</option>
-                <option value="local">En el local</option>
-                <option value="retiro">Retiro</option>
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-admin-muted pointer-events-none" />
+        {/* ── Advanced Filters ── */}
+        <div className="bg-white border border-[#243329]/10 rounded-2xl px-6 py-5">
+          <div className="flex flex-wrap gap-4 items-end">
+            <FilterSelect
+              label="Origen"
+              value={filterOrigin}
+              onChange={setFilterOrigin}
+              options={[
+                { value: 'all', label: 'Todos' },
+                { value: 'delivery', label: 'Delivery' },
+                { value: 'local', label: 'En el local' },
+                { value: 'retiro', label: 'Retiro' },
+              ]}
+            />
+            <FilterSelect label="Calidad" value={filterQuality} onChange={setFilterQuality} options={RATING_OPTIONS} />
+            <FilterSelect label="Tiempo entrega" value={filterTime} onChange={setFilterTime} options={RATING_OPTIONS} />
+            <FilterSelect label="Atención" value={filterAttention} onChange={setFilterAttention} options={RATING_OPTIONS} />
+
+            {/* Date exact */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#243329]/40">Fecha exacta</label>
+              <input
+                type="date"
+                value={dateExact}
+                onChange={(e) => setDateExact(e.target.value)}
+                className="h-9 px-3 text-sm border border-[#243329]/15 rounded-xl bg-[#F5EFE8]/60 text-[#243329] focus:outline-none focus:ring-1 focus:ring-[#C4322B]/30 transition-all"
+              />
+            </div>
+
+            {/* Comment search */}
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[160px]">
+              <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#243329]/40">Comentario</label>
+              <input
+                type="text"
+                value={filterComment}
+                onChange={(e) => setFilterComment(e.target.value)}
+                placeholder="Buscar..."
+                className="h-9 px-3 text-sm border border-[#243329]/15 rounded-xl bg-[#F5EFE8]/60 text-[#243329] placeholder:text-[#243329]/30 focus:outline-none focus:ring-1 focus:ring-[#C4322B]/30 transition-all"
+              />
+            </div>
+
+            {/* Result count + clear */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#243329]/40 invisible">.</label>
+              <div className="flex items-center gap-2 h-9">
+                <span className="text-xs text-[#243329]/50">
+                  {filtered.length} {filtered.length === 1 ? 'resultado' : 'resultados'}
+                </span>
+                {hasActiveFilters && (
+                  <button
+                    onClick={() => {
+                      setFilterOrigin('all')
+                      setFilterQuality('all')
+                      setFilterTime('all')
+                      setFilterAttention('all')
+                      setFilterComment('')
+                      setDateExact('')
+                      setSortBy('recent')
+                    }}
+                    className="flex items-center gap-1 text-xs text-[#243329]/50 hover:text-[#C4322B] transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                    Limpiar
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-
-          {/* Sort */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-admin-muted uppercase tracking-wide">Ordenar por</label>
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="h-9 pl-3 pr-8 text-sm border border-admin-border rounded-lg bg-admin-bg text-admin-text appearance-none focus:outline-none focus:ring-1 focus:ring-primary/40"
-              >
-                <option value="recent">Más recientes</option>
-                <option value="best">Mejor puntuación</option>
-                <option value="worst">Peor puntuación</option>
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-admin-muted pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Date range */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-admin-muted uppercase tracking-wide">Desde</label>
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="h-9 px-3 text-sm border border-admin-border rounded-lg bg-admin-bg text-admin-text focus:outline-none focus:ring-1 focus:ring-primary/40"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-admin-muted uppercase tracking-wide">Hasta</label>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="h-9 px-3 text-sm border border-admin-border rounded-lg bg-admin-bg text-admin-text focus:outline-none focus:ring-1 focus:ring-primary/40"
-            />
-          </div>
-
-          {/* Clear filters */}
-          {(filterOrigin !== 'all' || sortBy !== 'recent' || dateFrom || dateTo) && (
-            <button
-              onClick={() => {
-                setFilterOrigin('all')
-                setSortBy('recent')
-                setDateFrom('')
-                setDateTo('')
-              }}
-              className="h-9 px-3 text-sm text-admin-muted hover:text-admin-text flex items-center gap-1 border border-admin-border rounded-lg hover:bg-admin-bg transition-colors"
-            >
-              <X className="w-3.5 h-3.5" />
-              Limpiar
-            </button>
-          )}
         </div>
 
-        {/* Table */}
+        {/* ── Table ── */}
         {loading ? (
-          <div className="bg-white border border-admin-border rounded-xl overflow-hidden">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-14 border-b border-admin-border animate-pulse bg-admin-bg/50 last:border-0" />
+          <div className="bg-white border border-[#243329]/10 rounded-2xl overflow-hidden">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-14 border-b border-[#243329]/6 last:border-0 animate-pulse bg-[#F5EFE8]/40" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="bg-white border border-admin-border rounded-xl p-16 text-center">
-            <MessageSquare className="w-10 h-10 text-admin-muted/30 mx-auto mb-4" />
-            <p className="text-admin-text font-medium mb-1">Todavía no hay respuestas</p>
-            <p className="text-sm text-admin-muted">
-              Las encuestas completadas por tus clientes aparecerán acá.
+          <div className="bg-white border border-[#243329]/10 rounded-2xl px-6 py-20 text-center">
+            <p className="font-serif text-lg text-[#243329]/40">Sin resultados</p>
+            <p className="text-xs text-[#243329]/30 mt-1">
+              {hasActiveFilters
+                ? 'No hay respuestas para los filtros seleccionados.'
+                : 'Todavía no se recibieron encuestas.'}
             </p>
           </div>
         ) : (
-          <div className="bg-white border border-admin-border rounded-xl overflow-hidden">
-            {/* Table header */}
+          <div className="bg-white border border-[#243329]/10 rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[700px]">
+              <table className="w-full min-w-[760px]">
                 <thead>
-                  <tr className="border-b border-admin-border bg-admin-bg">
-                    {['Fecha', 'Experiencia', 'Calidad', 'Tiempo', 'Atención', 'Comentario', 'Nombre'].map(
-                      (col) => (
-                        <th
-                          key={col}
-                          className="text-left px-4 py-3 text-xs font-semibold text-admin-muted uppercase tracking-wide"
-                        >
-                          {col}
-                        </th>
-                      )
-                    )}
+                  <tr className="border-b border-[#243329]/8 bg-[#F5EFE8]/70">
+                    {TABLE_COLS.map((col) => (
+                      <th
+                        key={col}
+                        className="text-left px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#243329]/40"
+                      >
+                        {col}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((r) => (
+                  {filtered.map((r, i) => (
                     <tr
                       key={r.id}
                       onClick={() => setSelected(r)}
-                      className="border-b border-admin-border last:border-0 hover:bg-admin-bg/60 cursor-pointer transition-colors"
+                      className={`border-b border-[#243329]/6 last:border-0 cursor-pointer transition-colors hover:bg-[#F5EFE8]/50 ${
+                        i % 2 === 0 ? '' : 'bg-[#243329]/[0.015]'
+                      }`}
                     >
-                      <td className="px-4 py-3 text-sm text-admin-muted whitespace-nowrap">
-                        {new Date(r.created_at).toLocaleDateString('es-AR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: '2-digit',
-                        })}
+                      <td className="px-5 py-3.5 text-xs text-[#243329]/50 whitespace-nowrap font-mono">
+                        {formatDate(r.created_at)}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3.5 text-xs text-[#243329]/50 whitespace-nowrap font-mono">
+                        {formatTime(r.created_at)}
+                      </td>
+                      <td className="px-5 py-3.5">
                         <OriginBadge value={r.experience} />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3.5">
                         <RatingBadge value={r.quality} />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3.5">
                         <RatingBadge value={r.time} />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3.5">
                         <RatingBadge value={r.attention} />
                       </td>
-                      <td className="px-4 py-3 max-w-[180px]">
+                      <td className="px-5 py-3.5 max-w-[200px]">
                         {r.comment ? (
-                          <span className="text-sm text-admin-text">
-                            {expandedComment === r.id ? (
-                              <>
-                                {r.comment}{' '}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setExpandedComment(null)
-                                  }}
-                                  className="text-primary text-xs underline"
-                                >
-                                  ver menos
-                                </button>
-                              </>
-                            ) : r.comment.length > 40 ? (
-                              <>
-                                {r.comment.slice(0, 40)}...{' '}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setExpandedComment(r.id)
-                                  }}
-                                  className="text-primary text-xs underline"
-                                >
-                                  ver más
-                                </button>
-                              </>
-                            ) : (
-                              r.comment
-                            )}
+                          <span className="text-xs text-[#243329]/70 line-clamp-1">
+                            {r.comment}
                           </span>
                         ) : (
-                          <span className="text-admin-muted text-xs">—</span>
+                          <span className="text-[#243329]/20 text-xs">—</span>
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-admin-text whitespace-nowrap">
-                        {r.name || <span className="text-admin-muted text-xs">Anónimo</span>}
                       </td>
                     </tr>
                   ))}
@@ -449,18 +489,10 @@ export default function EncuestasAdminPage() {
           </div>
         )}
 
-        {/* Count */}
-        {!loading && filtered.length > 0 && (
-          <p className="text-xs text-admin-muted mt-3 text-right">
-            {filtered.length} {filtered.length === 1 ? 'respuesta' : 'respuestas'}
-          </p>
-        )}
       </div>
 
       {/* Detail Modal */}
-      {selected && (
-        <ResponseModal response={selected} onClose={() => setSelected(null)} />
-      )}
+      {selected && <DetailModal response={selected} onClose={() => setSelected(null)} />}
     </>
   )
 }
