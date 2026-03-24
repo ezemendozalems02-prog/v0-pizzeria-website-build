@@ -1,104 +1,118 @@
-"use client"
+'use client'
 
-import Link from "next/link"
-import { ShoppingBag, Tag, Image as ImageIcon, FileText, Settings, ArrowRight, Clock } from "lucide-react"
-import { useStore } from "@/lib/store"
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { Card } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import Link from 'next/link'
+import { ShoppingBag, Tag, Image as ImageIcon, FileText, Settings, ArrowRight } from 'lucide-react'
 
 const QUICK_LINKS = [
   {
-    href: "/admin/productos",
-    label: "Editar Productos",
-    description: "Precios, nombres, imágenes y estado",
+    href: '/admin/productos',
+    label: 'Editar Productos',
+    description: 'Precios, nombres, imágenes y estado',
     icon: ShoppingBag,
-    color: "bg-red-50 text-red-600",
+    color: 'bg-red-50 text-red-600',
   },
   {
-    href: "/admin/banners",
-    label: "Editar Banners",
-    description: "Hero, Favoritas y Promos",
+    href: '/admin/categorias',
+    label: 'Editar Categorías',
+    description: 'Gestionar categorías de productos',
+    icon: Tag,
+    color: 'bg-blue-50 text-blue-600',
+  },
+  {
+    href: '/admin/banners',
+    label: 'Editar Banners',
+    description: 'Hero, Favoritas y Promos',
     icon: ImageIcon,
-    color: "bg-blue-50 text-blue-600",
+    color: 'bg-green-50 text-green-600',
   },
   {
-    href: "/admin/contenido",
-    label: "Editar Contenido",
-    description: "Textos del home y secciones",
+    href: '/admin/contenido',
+    label: 'Editar Contenido',
+    description: 'Textos del home y secciones',
     icon: FileText,
-    color: "bg-green-50 text-green-600",
+    color: 'bg-yellow-50 text-yellow-600',
   },
   {
-    href: "/admin/configuracion",
-    label: "Configuración",
-    description: "WhatsApp, dirección y horarios",
+    href: '/admin/configuracion',
+    label: 'Configuración',
+    description: 'WhatsApp, dirección y horarios',
     icon: Settings,
-    color: "bg-orange-50 text-orange-600",
+    color: 'bg-orange-50 text-orange-600',
   },
 ]
 
 export default function AdminDashboard() {
-  const { products, categories, lastSaved } = useStore()
-  const activeProducts = products.filter((p) => p.active).length
+  const [stats, setStats] = useState({
+    productsCount: 0,
+    categoriesCount: 0,
+    loading: true,
+  })
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const supabase = await createClient()
+
+        const [productsRes, categoriesRes] = await Promise.all([
+          supabase.from('products').select('id').eq('active', true),
+          supabase.from('categories').select('id'),
+        ])
+
+        setStats({
+          productsCount: productsRes.data?.length ?? 0,
+          categoriesCount: categoriesRes.data?.length ?? 0,
+          loading: false,
+        })
+      } catch (error) {
+        console.error('Error fetching stats:', error)
+        setStats((prev) => ({ ...prev, loading: false }))
+      }
+    }
+
+    fetchStats()
+  }, [])
 
   return (
-    <div className="flex flex-col gap-8 max-w-5xl">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-admin-text">Bienvenido, TOTORE</h1>
-        <p className="text-sm text-admin-muted mt-1">
-          Desde acá podés editar todo el contenido de tu sitio.
-        </p>
+    <div className="max-w-5xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-serif font-bold text-admin-text mb-2">Bienvenido a TOTORE</h1>
+        <p className="text-admin-muted">Panel de administración conectado a Supabase</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Productos totales"
-          value={products.length}
-          icon={<ShoppingBag className="w-5 h-5" />}
-          color="text-primary"
-          bg="bg-primary/10"
-        />
-        <StatCard
-          label="Productos activos"
-          value={activeProducts}
-          icon={<ShoppingBag className="w-5 h-5" />}
-          color="text-green-600"
-          bg="bg-green-50"
-        />
-        <StatCard
-          label="Categorías"
-          value={categories.length}
-          icon={<Tag className="w-5 h-5" />}
-          color="text-blue-600"
-          bg="bg-blue-50"
-        />
-        <StatCard
-          label="Banners"
-          value={3}
-          icon={<ImageIcon className="w-5 h-5" />}
-          color="text-orange-600"
-          bg="bg-orange-50"
-        />
-      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <Card className="p-6 border-admin-border bg-admin-card">
+          <p className="text-sm text-admin-muted mb-2">Productos Activos</p>
+          {stats.loading ? (
+            <Skeleton className="h-10 w-20" />
+          ) : (
+            <p className="text-4xl font-bold text-primary">{stats.productsCount}</p>
+          )}
+        </Card>
 
-      {/* Last saved */}
-      {lastSaved && (
-        <div className="flex items-center gap-2 text-sm text-admin-muted bg-white border border-admin-border rounded-xl px-4 py-3">
-          <Clock className="w-4 h-4 text-green-500" />
-          Última actualización a las{" "}
-          {lastSaved.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
-        </div>
-      )}
+        <Card className="p-6 border-admin-border bg-admin-card">
+          <p className="text-sm text-admin-muted mb-2">Categorías</p>
+          {stats.loading ? (
+            <Skeleton className="h-10 w-20" />
+          ) : (
+            <p className="text-4xl font-bold text-primary">{stats.categoriesCount}</p>
+          )}
+        </Card>
+      </div>
 
       {/* Quick links */}
       <div>
-        <h2 className="text-base font-semibold text-admin-text mb-4">Accesos rápidos</h2>
+        <h2 className="text-lg font-semibold text-admin-text mb-4">Accesos rápidos</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {QUICK_LINKS.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="group bg-white border border-admin-border rounded-xl p-5 flex items-center gap-4 hover:border-primary/30 hover:shadow-sm transition-all"
+              className="group bg-admin-card border border-admin-border rounded-xl p-5 flex items-center gap-4 hover:border-primary/30 hover:shadow-sm transition-all"
             >
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${item.color}`}>
                 <item.icon className="w-5 h-5" />
@@ -116,26 +130,3 @@ export default function AdminDashboard() {
   )
 }
 
-function StatCard({
-  label,
-  value,
-  icon,
-  color,
-  bg,
-}: {
-  label: string
-  value: number
-  icon: React.ReactNode
-  color: string
-  bg: string
-}) {
-  return (
-    <div className="bg-white border border-admin-border rounded-xl p-5">
-      <div className={`w-9 h-9 rounded-lg ${bg} flex items-center justify-center ${color} mb-3`}>
-        {icon}
-      </div>
-      <p className="text-2xl font-bold text-admin-text">{value}</p>
-      <p className="text-xs text-admin-muted mt-0.5">{label}</p>
-    </div>
-  )
-}

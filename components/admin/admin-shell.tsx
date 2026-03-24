@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import {
@@ -16,8 +16,8 @@ import {
   ExternalLink,
   ChevronRight,
 } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
-import { useStore } from "@/lib/store"
 import { Button } from "@/components/ui/button"
 
 const NAV_ITEMS = [
@@ -32,21 +32,35 @@ const NAV_ITEMS = [
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const { lastSaved } = useStore()
   const [authed, setAuthed] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
   useEffect(() => {
     if (pathname === "/admin/login") {
       setAuthed(false)
       return
     }
-    const auth = sessionStorage.getItem("admin_auth")
-    if (auth !== "true") {
-      router.replace("/admin/login")
-    } else {
-      setAuthed(true)
+
+    const checkAuth = async () => {
+      try {
+        const supabase = await createClient()
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+
+        if (!user) {
+          router.replace("/admin/login")
+        } else {
+          setAuthed(true)
+          setLastSaved(new Date())
+        }
+      } catch (error) {
+        router.replace("/admin/login")
+      }
     }
+
+    checkAuth()
   }, [pathname, router])
 
   if (pathname === "/admin/login") {
@@ -55,9 +69,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   if (!authed) return null
 
-  function handleLogout() {
-    sessionStorage.removeItem("admin_auth")
-    router.push("/admin/login")
+  async function handleLogout() {
+    try {
+      const supabase = await createClient()
+      await supabase.auth.signOut()
+      router.push("/admin/login")
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
   }
 
   const isActive = (item: (typeof NAV_ITEMS)[0]) => {
