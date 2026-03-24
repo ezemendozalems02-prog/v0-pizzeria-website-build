@@ -1,8 +1,11 @@
-import { type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/proxy'
+import { type NextRequest, NextResponse } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+export function middleware(request: NextRequest) {
+  // For now, just pass through all requests
+  // Supabase session management happens on the client side
+  return NextResponse.next({
+    request,
+  })
 }
 
 export const config = {
@@ -10,3 +13,4 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
+

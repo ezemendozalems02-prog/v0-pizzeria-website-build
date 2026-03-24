@@ -1,313 +1,289 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Star, CheckCircle2, ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
 
-export default function SurveyPage() {
+type EmojiRating = 'bad' | 'ok' | 'good' | null
+
+export default function EncuestaPage() {
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    rating: '5',
-    experience: '',
-    origin: 'delivery',
-    comments: '',
+  // Form state
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [experience, setExperience] = useState<'delivery' | 'local' | 'retiro' | null>(null)
+  const [ratings, setRatings] = useState({
+    quality: null as EmojiRating,
+    time: null as EmojiRating,
+    attention: null as EmojiRating,
   })
+  const [comment, setComment] = useState('')
 
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+  const isValid =
+    name.trim() &&
+    email.includes('@') &&
+    experience &&
+    ratings.quality &&
+    ratings.time &&
+    ratings.attention
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isValid) return
+
     setLoading(true)
     setError(null)
 
     try {
       const supabase = await createClient()
-
-      const { error: dbError } = await supabase.from('survey_responses').insert({
-        name: formData.name,
-        email: formData.email,
-        rating: parseInt(formData.rating),
-        experience: formData.experience,
-        order_origin: formData.origin,
-        comments: formData.comments,
-        submitted_at: new Date().toISOString(),
+      const { error: insertError } = await supabase.from('survey_responses').insert({
+        name: name.trim(),
+        email: email.trim(),
+        experience,
+        quality_rating: ratings.quality,
+        time_rating: ratings.time,
+        attention_rating: ratings.attention,
+        comment: comment.trim() || null,
       })
 
-      if (dbError) throw dbError
-
+      if (insertError) throw insertError
       setSubmitted(true)
-      // Reset form after 3 seconds
-      setTimeout(() => {
-        setFormData({
-          name: '',
-          email: '',
-          rating: '5',
-          experience: '',
-          origin: 'delivery',
-          comments: '',
-        })
-        setSubmitted(false)
-      }, 3000)
     } catch (err: any) {
       setError(err.message || 'Error al enviar la encuesta')
+    } finally {
       setLoading(false)
     }
   }
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-background/80 flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <div className="mb-6 flex justify-center">
-            <CheckCircle2 className="w-16 h-16 text-primary animate-pulse" />
+      <div className="min-h-screen bg-background pt-20 pb-12 px-4 flex items-center justify-center">
+        <div className="max-w-md w-full text-center">
+          <div className="mb-6">
+            <h1 className="font-serif text-4xl font-bold text-primary mb-3">¡Gracias!</h1>
+            <p className="text-foreground text-lg">Tu opinión es muy importante para nosotros</p>
           </div>
-          <h1 className="font-serif text-3xl font-bold text-foreground mb-2">
-            ¡Gracias!
-          </h1>
-          <p className="text-muted-foreground mb-8">
-            Tu opinión es muy importante para nosotros. Nos ayuda a mejorar cada día.
-          </p>
-          <Link href="/" className="inline-block">
-            <Button className="bg-primary hover:bg-primary/90">
-              Volver al inicio
-            </Button>
-          </Link>
+          <div className="bg-primary/5 rounded-2xl p-8 mb-6 border border-primary/10">
+            <p className="text-sm text-muted-foreground mb-4">
+              Tus comentarios nos ayudan a mejorar cada día para ofrecerte la mejor experiencia en TOTORE.
+            </p>
+            <div className="text-center py-4">
+              <p className="text-5xl">🍕</p>
+            </div>
+          </div>
+          <Button
+            onClick={() => window.location.href = '/'}
+            className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-medium"
+          >
+            Volver al Home
+          </Button>
         </div>
       </div>
     )
   }
 
   return (
-    <>
-      {/* Hero Section */}
-      <div className="relative w-full h-80 overflow-hidden">
+    <div className="min-h-screen bg-background pt-20 pb-12 px-4">
+      {/* Header */}
+      <div className="max-w-2xl mx-auto mb-8 text-center">
+        <h1 className="font-serif text-4xl font-bold text-foreground mb-2">
+          Tu Opinión Importa
+        </h1>
+        <p className="text-muted-foreground text-lg">
+          Ayúdanos a mejorar compartiendo tu experiencia en TOTORE
+        </p>
+      </div>
+
+      {/* Hero Image */}
+      <div className="max-w-2xl mx-auto mb-8 rounded-2xl overflow-hidden h-64 md:h-80 relative">
         <Image
           src="/images/survey-hero.jpg"
-          alt="Clientes disfrutando de pizza"
+          alt="TOTORE pizzería"
           fill
           className="object-cover"
-          priority
         />
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-          <h1 className="font-serif text-4xl md:text-5xl font-bold text-white text-balance mb-3">
-            Tu opinión importa
-          </h1>
-          <p className="text-white/90 text-lg max-w-xl">
-            Ayúdanos a mejorar compartiendo tu experiencia en TOTORE
-          </p>
-        </div>
       </div>
 
-      {/* Form Section */}
-      <div className="bg-background">
-        <div className="max-w-2xl mx-auto px-4 py-12 md:py-16">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Personal Info */}
-            <div className="space-y-6">
-              <div>
-                <h2 className="font-serif text-2xl font-bold text-foreground mb-6">
-                  Cuéntanos sobre ti
-                </h2>
-              </div>
+      {/* Form Card */}
+      <form
+        onSubmit={handleSubmit}
+        className="max-w-2xl mx-auto bg-white rounded-2xl border border-border shadow-sm p-6 md:p-8"
+      >
+        {/* Contact Info */}
+        <div className="mb-8">
+          <h2 className="font-semibold text-foreground mb-4 text-lg">Datos de contacto</h2>
+          <div className="flex flex-col gap-4">
+            <Input
+              type="text"
+              placeholder="Tu nombre"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="h-11 text-base"
+              required
+            />
+            <Input
+              type="email"
+              placeholder="Tu email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-11 text-base"
+              required
+            />
+          </div>
+        </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-foreground font-medium">
-                    Nombre *
-                  </Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => handleChange('name', e.target.value)}
-                    placeholder="Tu nombre"
-                    required
-                    className="h-11 border-border"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-foreground font-medium">
-                    Email *
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
-                    placeholder="tu@email.com"
-                    required
-                    className="h-11 border-border"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Experience */}
-            <div className="space-y-6 pb-8 border-b border-border">
-              <div>
-                <h2 className="font-serif text-2xl font-bold text-foreground mb-6">
-                  Tu experiencia
-                </h2>
-              </div>
-
-              {/* Origin */}
-              <div className="space-y-3">
-                <Label className="text-foreground font-medium">
-                  ¿De dónde viniste? *
-                </Label>
-                <RadioGroup value={formData.origin} onValueChange={(val) => handleChange('origin', val)}>
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition">
-                    <RadioGroupItem value="local" id="local" />
-                    <Label htmlFor="local" className="cursor-pointer flex-1 font-normal">
-                      Visitamos el local
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition">
-                    <RadioGroupItem value="delivery" id="delivery" />
-                    <Label htmlFor="delivery" className="cursor-pointer flex-1 font-normal">
-                      Pedimos por delivery
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition">
-                    <RadioGroupItem value="takeaway" id="takeaway" />
-                    <Label htmlFor="takeaway" className="cursor-pointer flex-1 font-normal">
-                      Retiramos en el local
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              {/* Rating */}
-              <div className="space-y-4">
-                <Label className="text-foreground font-medium">
-                  ¿Qué calificación nos das? *
-                </Label>
-                <div className="grid grid-cols-5 gap-3">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => handleChange('rating', star.toString())}
-                      className={`py-3 px-2 rounded-lg border-2 transition flex items-center justify-center ${
-                        parseInt(formData.rating) >= star
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/30'
-                      }`}
-                    >
-                      <Star
-                        className="w-6 h-6"
-                        fill={parseInt(formData.rating) >= star ? 'currentColor' : 'none'}
-                        color={parseInt(formData.rating) >= star ? '#C4322B' : '#999'}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Experience Type */}
-              <div className="space-y-3">
-                <Label className="text-foreground font-medium">
-                  ¿Qué aspecto de tu experiencia fue más memorable? *
-                </Label>
-                <RadioGroup
-                  value={formData.experience}
-                  onValueChange={(val) => handleChange('experience', val)}
-                >
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition">
-                    <RadioGroupItem value="quality" id="quality" />
-                    <Label htmlFor="quality" className="cursor-pointer flex-1 font-normal">
-                      Calidad de la comida
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition">
-                    <RadioGroupItem value="service" id="service" />
-                    <Label htmlFor="service" className="cursor-pointer flex-1 font-normal">
-                      Atención al cliente
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition">
-                    <RadioGroupItem value="atmosphere" id="atmosphere" />
-                    <Label htmlFor="atmosphere" className="cursor-pointer flex-1 font-normal">
-                      Ambiente del local
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition">
-                    <RadioGroupItem value="delivery" id="delivery-exp" />
-                    <Label htmlFor="delivery-exp" className="cursor-pointer flex-1 font-normal">
-                      Velocidad de entrega
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition">
-                    <RadioGroupItem value="price" id="price" />
-                    <Label htmlFor="price" className="cursor-pointer flex-1 font-normal">
-                      Relación precio-calidad
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            </div>
-
-            {/* Comments */}
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="comments" className="text-foreground font-medium">
-                  Comentarios adicionales
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Cuéntanos qué nos faltó o qué hicimos bien
-                </p>
-                <Textarea
-                  id="comments"
-                  value={formData.comments}
-                  onChange={(e) => handleChange('comments', e.target.value)}
-                  placeholder="Tu opinión aquí..."
-                  className="min-h-32 border-border resize-none"
-                />
-              </div>
-            </div>
-
-            {/* Error */}
-            {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {error}
-              </div>
-            )}
-
-            {/* Submit */}
-            <div className="flex gap-4">
-              <Link href="/" className="flex-1">
-                <Button variant="outline" className="w-full h-12 border-border">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Volver
-                </Button>
-              </Link>
-              <Button
-                type="submit"
-                disabled={loading}
-                className="flex-1 h-12 bg-primary hover:bg-primary/90 text-white font-medium"
+        {/* Experience Type */}
+        <div className="mb-8">
+          <h2 className="font-semibold text-foreground mb-4 text-lg">¿Cómo fue tu experiencia?</h2>
+          <div className="flex flex-col gap-3">
+            {[
+              { value: 'delivery' as const, label: '🚴 Delivery', desc: 'Pedido a domicilio' },
+              { value: 'local' as const, label: '🏪 En el local', desc: 'Comer en TOTORE' },
+              { value: 'retiro' as const, label: '🎒 Retiro', desc: 'Retiro en la puerta' },
+            ].map(({ value, label, desc }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setExperience(value)}
+                className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${
+                  experience === value
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/30'
+                }`}
               >
-                {loading ? 'Enviando...' : 'Enviar encuesta'}
-              </Button>
-            </div>
-          </form>
+                <div className="flex-1">
+                  <p className="font-medium text-foreground">{label}</p>
+                  <p className="text-sm text-muted-foreground">{desc}</p>
+                </div>
+                <div
+                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                    experience === value
+                      ? 'border-primary bg-primary'
+                      : 'border-border'
+                  }`}
+                >
+                  {experience === value && <div className="w-2 h-2 bg-white rounded-full" />}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
-    </>
+
+        {/* Emoji Ratings */}
+        <div className="mb-8">
+          <h2 className="font-semibold text-foreground mb-6 text-lg">¿Cómo evaluarías?</h2>
+          <div className="flex flex-col gap-8">
+            <RatingCategory
+              category="quality"
+              label="Calidad de la Comida"
+              value={ratings.quality}
+              onChange={(val) => setRatings({ ...ratings, quality: val })}
+            />
+            <RatingCategory
+              category="time"
+              label="Tiempo de Entrega"
+              value={ratings.time}
+              onChange={(val) => setRatings({ ...ratings, time: val })}
+            />
+            <RatingCategory
+              category="attention"
+              label="Atención al Cliente"
+              value={ratings.attention}
+              onChange={(val) => setRatings({ ...ratings, attention: val })}
+            />
+          </div>
+        </div>
+
+        {/* Comment */}
+        <div className="mb-8">
+          <h2 className="font-semibold text-foreground mb-4 text-lg">Comentarios adicionales</h2>
+          <div className="relative">
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value.slice(0, 50))}
+              placeholder="Cuéntanos qué podemos mejorar... (máximo 50 caracteres)"
+              className="w-full h-24 p-4 border border-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 text-base"
+              maxLength={50}
+            />
+            <p className="text-xs text-muted-foreground mt-2 text-right">
+              {comment.length}/50
+            </p>
+          </div>
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          disabled={!isValid || loading}
+          className="w-full h-12 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-base"
+        >
+          {loading ? 'Enviando...' : '✓ Enviar Encuesta'}
+        </Button>
+
+        <p className="text-xs text-muted-foreground text-center mt-4">
+          Tus respuestas nos ayudan a mejorar. Gracias por tu tiempo.
+        </p>
+      </form>
+    </div>
   )
 }
+
+function RatingCategory({
+  category,
+  label,
+  value,
+  onChange,
+}: {
+  category: string
+  label: string
+  value: EmojiRating
+  onChange: (val: EmojiRating) => void
+}) {
+  const options: { value: EmojiRating; emoji: string; label: string }[] = [
+    { value: 'bad', emoji: '😞', label: 'Bien' },
+    { value: 'ok', emoji: '😐', label: 'Normal' },
+    { value: 'good', emoji: '😍', label: 'Excelente' },
+  ]
+
+  return (
+    <div>
+      <p className="font-medium text-foreground mb-4">{label}</p>
+      <div className="flex gap-4 justify-around">
+        {options.map(({ value: optValue, emoji, label: optLabel }) => (
+          <button
+            key={optValue}
+            type="button"
+            onClick={() => onChange(optValue)}
+            className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all border-2 flex-1 ${
+              value === optValue
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/30'
+            }`}
+          >
+            <span className="text-5xl">{emoji}</span>
+            <span
+              className={`text-sm font-medium ${
+                value === optValue ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              {optLabel}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
