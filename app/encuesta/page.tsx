@@ -2,35 +2,24 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import Image from 'next/image'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 
-type EmojiRating = 'bad' | 'ok' | 'good' | null
+type Rating = 'bad' | 'ok' | 'good' | null
+type Experience = 'delivery' | 'local' | 'retiro' | null
 
 export default function EncuestaPage() {
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Form state
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [experience, setExperience] = useState<'delivery' | 'local' | 'retiro' | null>(null)
+  const [experience, setExperience] = useState<Experience>(null)
   const [ratings, setRatings] = useState({
-    quality: null as EmojiRating,
-    time: null as EmojiRating,
-    attention: null as EmojiRating,
+    quality: null as Rating,
+    time: null as Rating,
+    attention: null as Rating,
   })
   const [comment, setComment] = useState('')
 
-  const isValid =
-    name.trim() &&
-    email.includes('@') &&
-    experience &&
-    ratings.quality &&
-    ratings.time &&
-    ratings.attention
+  const isValid = experience && ratings.quality && ratings.time && ratings.attention
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,8 +31,6 @@ export default function EncuestaPage() {
     try {
       const supabase = await createClient()
       const { error: insertError } = await supabase.from('survey_responses').insert({
-        name: name.trim(),
-        email: email.trim(),
         experience,
         quality_rating: ratings.quality,
         time_rating: ratings.time,
@@ -60,230 +47,341 @@ export default function EncuestaPage() {
     }
   }
 
+  // Success state
   if (submitted) {
     return (
-      <div className="min-h-screen bg-background pt-20 pb-12 px-4 flex items-center justify-center">
+      <div className="min-h-screen bg-[#F5EFE8] flex items-center justify-center px-6 py-20">
         <div className="max-w-md w-full text-center">
-          <div className="mb-6">
-            <h1 className="font-serif text-4xl font-bold text-primary mb-3">¡Gracias!</h1>
-            <p className="text-foreground text-lg">Tu opinión es muy importante para nosotros</p>
-          </div>
-          <div className="bg-primary/5 rounded-2xl p-8 mb-6 border border-primary/10">
-            <p className="text-sm text-muted-foreground mb-4">
-              Tus comentarios nos ayudan a mejorar cada día para ofrecerte la mejor experiencia en TOTORE.
+          {/* Divider */}
+          <div className="w-16 h-px bg-[#243329]/20 mx-auto mb-10" />
+          
+          <p className="font-serif text-3xl md:text-4xl tracking-wide text-[#243329] mb-3">
+            TOTORE
+          </p>
+          <p className="text-[#243329]/60 text-sm tracking-widest uppercase mb-12">
+            Gracias por tu feedback
+          </p>
+
+          <div className="mb-12">
+            <p className="text-[#243329]/80 text-base leading-relaxed mb-8">
+              Tu opinión nos ayuda a seguir<br />
+              perfeccionando la experiencia TOTORE.
             </p>
-            <div className="text-center py-4">
-              <p className="text-5xl">🍕</p>
-            </div>
           </div>
-          <Button
-            onClick={() => window.location.href = '/'}
-            className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-medium"
+
+          {/* Divider */}
+          <div className="w-16 h-px bg-[#243329]/20 mx-auto mb-10" />
+
+          <button
+            onClick={() => (window.location.href = '/')}
+            className="inline-block px-8 py-3 bg-[#C4322B] text-white text-sm tracking-widest uppercase rounded-full hover:bg-[#a82a24] transition-colors duration-200"
           >
-            Volver al Home
-          </Button>
+            Volver al inicio
+          </button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background pt-20 pb-12 px-4">
-      {/* Header */}
-      <div className="max-w-2xl mx-auto mb-8 text-center">
-        <h1 className="font-serif text-4xl font-bold text-foreground mb-2">
-          Tu Opinión Importa
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          Ayúdanos a mejorar compartiendo tu experiencia en TOTORE
-        </p>
-      </div>
+    <div className="min-h-screen bg-[#F5EFE8] px-6 py-20 md:py-28">
+      <div className="max-w-lg mx-auto">
+        {/* Header */}
+        <header className="text-center mb-16">
+          {/* Top divider */}
+          <div className="w-16 h-px bg-[#243329]/20 mx-auto mb-10" />
 
-      {/* Hero Image */}
-      <div className="max-w-2xl mx-auto mb-8 rounded-2xl overflow-hidden h-64 md:h-80 relative">
-        <Image
-          src="/images/survey-hero.jpg"
-          alt="TOTORE pizzería"
-          fill
-          className="object-cover"
-        />
-      </div>
+          <h1 className="font-serif text-3xl md:text-4xl tracking-wide text-[#243329] mb-3">
+            TOTORE
+          </h1>
+          <p className="text-[#243329]/60 text-sm tracking-widest uppercase mb-10">
+            Encuesta de satisfaccion
+          </p>
 
-      {/* Form Card */}
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-2xl mx-auto bg-white rounded-2xl border border-border shadow-sm p-6 md:p-8"
-      >
-        {/* Contact Info */}
-        <div className="mb-8">
-          <h2 className="font-semibold text-foreground mb-4 text-lg">Datos de contacto</h2>
-          <div className="flex flex-col gap-4">
-            <Input
-              type="text"
-              placeholder="Tu nombre"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="h-11 text-base"
-              required
-            />
-            <Input
-              type="email"
-              placeholder="Tu email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-11 text-base"
-              required
-            />
-          </div>
-        </div>
+          {/* Bottom divider */}
+          <div className="w-16 h-px bg-[#243329]/20 mx-auto mb-10" />
 
-        {/* Experience Type */}
-        <div className="mb-8">
-          <h2 className="font-semibold text-foreground mb-4 text-lg">¿Cómo fue tu experiencia?</h2>
-          <div className="flex flex-col gap-3">
-            {[
-              { value: 'delivery' as const, label: '🚴 Delivery', desc: 'Pedido a domicilio' },
-              { value: 'local' as const, label: '🏪 En el local', desc: 'Comer en TOTORE' },
-              { value: 'retiro' as const, label: '🎒 Retiro', desc: 'Retiro en la puerta' },
-            ].map(({ value, label, desc }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setExperience(value)}
-                className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${
-                  experience === value
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/30'
-                }`}
-              >
-                <div className="flex-1">
-                  <p className="font-medium text-foreground">{label}</p>
-                  <p className="text-sm text-muted-foreground">{desc}</p>
-                </div>
-                <div
-                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-                    experience === value
-                      ? 'border-primary bg-primary'
-                      : 'border-border'
-                  }`}
-                >
-                  {experience === value && <div className="w-2 h-2 bg-white rounded-full" />}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
+          <p className="text-[#243329]/70 text-base">
+            Tu feedback nos ayuda a mejorar
+          </p>
+        </header>
 
-        {/* Emoji Ratings */}
-        <div className="mb-8">
-          <h2 className="font-semibold text-foreground mb-6 text-lg">¿Cómo evaluarías?</h2>
-          <div className="flex flex-col gap-8">
-            <RatingCategory
-              category="quality"
-              label="Calidad de la Comida"
+        <form onSubmit={handleSubmit}>
+          {/* Rating: Quality */}
+          <section className="mb-16">
+            <p className="text-center text-[#243329] text-base mb-10">
+              ¿Como calificarias la calidad de nuestros productos?
+            </p>
+            <RatingSelector
               value={ratings.quality}
               onChange={(val) => setRatings({ ...ratings, quality: val })}
             />
-            <RatingCategory
-              category="time"
-              label="Tiempo de Entrega"
+          </section>
+
+          {/* Divider */}
+          <div className="w-full h-px bg-[#243329]/10 mb-16" />
+
+          {/* Rating: Time */}
+          <section className="mb-16">
+            <p className="text-center text-[#243329] text-base mb-10">
+              ¿Como calificarias el tiempo de entrega?
+            </p>
+            <RatingSelector
               value={ratings.time}
               onChange={(val) => setRatings({ ...ratings, time: val })}
             />
-            <RatingCategory
-              category="attention"
-              label="Atención al Cliente"
+          </section>
+
+          {/* Divider */}
+          <div className="w-full h-px bg-[#243329]/10 mb-16" />
+
+          {/* Rating: Attention */}
+          <section className="mb-16">
+            <p className="text-center text-[#243329] text-base mb-10">
+              ¿Como calificarias la atencion recibida?
+            </p>
+            <RatingSelector
               value={ratings.attention}
               onChange={(val) => setRatings({ ...ratings, attention: val })}
             />
-          </div>
-        </div>
+          </section>
 
-        {/* Comment */}
-        <div className="mb-8">
-          <h2 className="font-semibold text-foreground mb-4 text-lg">Comentarios adicionales</h2>
-          <div className="relative">
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value.slice(0, 50))}
-              placeholder="Cuéntanos qué podemos mejorar... (máximo 50 caracteres)"
-              className="w-full h-24 p-4 border border-border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 text-base"
-              maxLength={50}
-            />
-            <p className="text-xs text-muted-foreground mt-2 text-right">
-              {comment.length}/50
+          {/* Divider */}
+          <div className="w-full h-px bg-[#243329]/10 mb-16" />
+
+          {/* Experience Origin */}
+          <section className="mb-16">
+            <p className="text-center text-[#243329] text-base mb-10">
+              Origen de la experiencia
             </p>
-          </div>
-        </div>
+            <div className="flex flex-col gap-4">
+              <ExperienceCard
+                value="delivery"
+                title="Delivery"
+                subtitle="PEDIDO A DOMICILIO"
+                selected={experience === 'delivery'}
+                onClick={() => setExperience('delivery')}
+              />
+              <ExperienceCard
+                value="local"
+                title="Local"
+                subtitle="CONSUMICION EN EL LOCAL"
+                selected={experience === 'local'}
+                onClick={() => setExperience('local')}
+              />
+              <ExperienceCard
+                value="retiro"
+                title="Retiro"
+                subtitle="RETIRO EN EL LOCAL"
+                selected={experience === 'retiro'}
+                onClick={() => setExperience('retiro')}
+              />
+            </div>
+          </section>
 
-        {/* Error */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-            {error}
-          </div>
-        )}
+          {/* Divider */}
+          <div className="w-full h-px bg-[#243329]/10 mb-16" />
 
-        {/* Submit Button */}
-        <Button
-          type="submit"
-          disabled={!isValid || loading}
-          className="w-full h-12 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-base"
-        >
-          {loading ? 'Enviando...' : '✓ Enviar Encuesta'}
-        </Button>
+          {/* Comment */}
+          <section className="mb-16">
+            <p className="text-center text-[#243329] text-base mb-2">
+              Comentario adicional
+            </p>
+            <p className="text-center text-[#243329]/50 text-sm mb-8">
+              ¿Queres compartir algo mas?
+            </p>
+            <div className="relative">
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value.slice(0, 50))}
+                placeholder="Escribe aqui..."
+                maxLength={50}
+                className="w-full h-28 p-4 bg-[#F5EFE8] border border-[#243329]/15 rounded-lg resize-none text-[#243329] placeholder:text-[#243329]/30 focus:outline-none focus:border-[#C4322B]/50 transition-colors"
+              />
+              <p className="text-right text-[#243329]/40 text-xs mt-2">
+                {comment.length} / 50
+              </p>
+            </div>
+          </section>
 
-        <p className="text-xs text-muted-foreground text-center mt-4">
-          Tus respuestas nos ayudan a mejorar. Gracias por tu tiempo.
-        </p>
-      </form>
-    </div>
-  )
-}
+          {/* Error */}
+          {error && (
+            <div className="mb-8 p-4 bg-[#C4322B]/10 border border-[#C4322B]/20 rounded-lg text-[#C4322B] text-sm text-center">
+              {error}
+            </div>
+          )}
 
-function RatingCategory({
-  category,
-  label,
-  value,
-  onChange,
-}: {
-  category: string
-  label: string
-  value: EmojiRating
-  onChange: (val: EmojiRating) => void
-}) {
-  const options: { value: EmojiRating; emoji: string; label: string }[] = [
-    { value: 'bad', emoji: '😞', label: 'Bien' },
-    { value: 'ok', emoji: '😐', label: 'Normal' },
-    { value: 'good', emoji: '😍', label: 'Excelente' },
-  ]
-
-  return (
-    <div>
-      <p className="font-medium text-foreground mb-4">{label}</p>
-      <div className="flex gap-4 justify-around">
-        {options.map(({ value: optValue, emoji, label: optLabel }) => (
-          <button
-            key={optValue}
-            type="button"
-            onClick={() => onChange(optValue)}
-            className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all border-2 flex-1 ${
-              value === optValue
-                ? 'border-primary bg-primary/5'
-                : 'border-border hover:border-primary/30'
-            }`}
-          >
-            <span className="text-5xl">{emoji}</span>
-            <span
-              className={`text-sm font-medium ${
-                value === optValue ? 'text-primary' : 'text-muted-foreground'
-              }`}
+          {/* Submit */}
+          <div className="text-center mb-12">
+            <button
+              type="submit"
+              disabled={!isValid || loading}
+              className="px-12 py-4 bg-[#C4322B] text-white text-sm tracking-widest uppercase rounded-full hover:bg-[#a82a24] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              {optLabel}
-            </span>
-          </button>
-        ))}
+              {loading ? 'Enviando...' : 'Enviar opinion'}
+            </button>
+          </div>
+
+          {/* Footer text */}
+          <footer className="text-center">
+            <div className="w-16 h-px bg-[#243329]/20 mx-auto mb-8" />
+            <p className="text-[#243329]/50 text-sm leading-relaxed mb-2">
+              Buscamos seguir perfeccionando la experiencia TOTORE
+            </p>
+            <p className="text-[#243329]/40 text-xs tracking-widest uppercase">
+              Gracias por elegirnos
+            </p>
+          </footer>
+        </form>
       </div>
     </div>
   )
 }
 
+/* ============================================
+   Rating Selector Component
+   ============================================ */
+
+function RatingSelector({
+  value,
+  onChange,
+}: {
+  value: Rating
+  onChange: (val: Rating) => void
+}) {
+  const options: { val: Rating; label: string }[] = [
+    { val: 'bad', label: 'MALA' },
+    { val: 'ok', label: 'NORMAL' },
+    { val: 'good', label: 'MUY BUENA' },
+  ]
+
+  return (
+    <div className="flex justify-center gap-6 md:gap-10">
+      {options.map(({ val, label }) => {
+        const isSelected = value === val
+        return (
+          <button
+            key={val}
+            type="button"
+            onClick={() => onChange(val)}
+            className="flex flex-col items-center gap-3 group"
+          >
+            {/* Circle with icon */}
+            <div
+              className={`w-16 h-16 md:w-20 md:h-20 rounded-full border-2 flex items-center justify-center transition-all duration-200 transform ${
+                isSelected
+                  ? 'bg-[#C4322B] border-[#C4322B] scale-105'
+                  : 'bg-transparent border-[#243329]/20 group-hover:border-[#243329]/40'
+              }`}
+            >
+              <RatingIcon type={val} selected={isSelected} />
+            </div>
+            {/* Label */}
+            <span
+              className={`text-xs tracking-widest uppercase transition-colors duration-200 ${
+                isSelected ? 'text-[#C4322B]' : 'text-[#243329]/50'
+              }`}
+            >
+              {label}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ============================================
+   Rating Icon Component (Minimalist SVG)
+   ============================================ */
+
+function RatingIcon({ type, selected }: { type: Rating; selected: boolean }) {
+  const color = selected ? '#FFFFFF' : '#243329'
+  const opacity = selected ? 1 : 0.4
+
+  if (type === 'bad') {
+    // Sad face - minimalist
+    return (
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style={{ opacity }}>
+        <circle cx="9" cy="11" r="1.5" fill={color} />
+        <circle cx="19" cy="11" r="1.5" fill={color} />
+        <path
+          d="M9 20C9 20 11.5 17 14 17C16.5 17 19 20 19 20"
+          stroke={color}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </svg>
+    )
+  }
+
+  if (type === 'ok') {
+    // Neutral face - minimalist
+    return (
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style={{ opacity }}>
+        <circle cx="9" cy="11" r="1.5" fill={color} />
+        <circle cx="19" cy="11" r="1.5" fill={color} />
+        <line x1="9" y1="19" x2="19" y2="19" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    )
+  }
+
+  // Happy face - minimalist
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style={{ opacity }}>
+      <circle cx="9" cy="11" r="1.5" fill={color} />
+      <circle cx="19" cy="11" r="1.5" fill={color} />
+      <path
+        d="M9 17C9 17 11.5 20 14 20C16.5 20 19 17 19 17"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+/* ============================================
+   Experience Card Component
+   ============================================ */
+
+function ExperienceCard({
+  value,
+  title,
+  subtitle,
+  selected,
+  onClick,
+}: {
+  value: string
+  title: string
+  subtitle: string
+  selected: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full p-5 rounded-lg border text-left transition-all duration-200 ${
+        selected
+          ? 'bg-[#C4322B] border-[#C4322B]'
+          : 'bg-[#F5EFE8] border-[#243329]/15 hover:border-[#243329]/30'
+      }`}
+    >
+      <p
+        className={`text-base font-medium mb-1 transition-colors ${
+          selected ? 'text-white' : 'text-[#243329]'
+        }`}
+      >
+        {title}
+      </p>
+      <p
+        className={`text-xs tracking-widest uppercase transition-colors ${
+          selected ? 'text-white/70' : 'text-[#243329]/50'
+        }`}
+      >
+        {subtitle}
+      </p>
+    </button>
+  )
+}
