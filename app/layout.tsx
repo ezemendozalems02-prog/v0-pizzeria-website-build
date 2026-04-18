@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { CartProvider } from '@/lib/cart-context'
 import { StoreProvider } from '@/lib/store'
 import { BannersProvider } from '@/components/banners-provider'
+import { ProductsProvider } from '@/components/products-provider'
 import { Header } from '@/components/header'
 import { CartDrawer } from '@/components/cart-drawer'
 import { AddedToast } from '@/components/added-toast'
@@ -60,17 +61,19 @@ export default function RootLayout({
     <html lang="es">
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`}>
         <BannersProvider>
-          <StoreProvider>
-            <CartProvider>
-              <Header />
-              <CartDrawer />
-              <AddedToast />
-              <main className="min-h-screen pt-16">
-                {children}
-              </main>
-              <Footer />
-            </CartProvider>
-          </StoreProvider>
+          <ProductsProvider>
+            <StoreProvider>
+              <CartProvider>
+                <Header />
+                <CartDrawer />
+                <AddedToast />
+                <main className="min-h-screen pt-16">
+                  {children}
+                </main>
+                <Footer />
+              </CartProvider>
+            </StoreProvider>
+          </ProductsProvider>
         </BannersProvider>
         <Analytics />
       </body>

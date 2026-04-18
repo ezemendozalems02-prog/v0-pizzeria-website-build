@@ -1,237 +1,289 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import Image from "next/image"
-import { Plus, Pencil, Trash2, Search, CheckCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { useStore, type StoreProduct } from "@/lib/store"
-import { ProductForm } from "@/components/admin/product-form"
+import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { useProductsContext } from '@/components/products-provider'
+import Image from 'next/image'
+import { Wifi, WifiOff, Loader2, CheckCircle2, Edit2, Save, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 
-export default function ProductsPage() {
-  const { products, addProduct, updateProduct, deleteProduct, categories } = useStore()
-  const [search, setSearch] = useState("")
-  const [editProduct, setEditProduct] = useState<StoreProduct | null>(null)
-  const [creating, setCreating] = useState(false)
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+export default function ProductsAdminPage() {
+  const { products, loading, status, updateProductLocally, refreshFromDB } = useProductsContext()
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState<any>(null)
+  const [saving, setSaving] = useState(false)
   const [savedId, setSavedId] = useState<string | null>(null)
 
-  const filtered = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.description.toLowerCase().includes(search.toLowerCase())
-  )
-
-  function getCategoryLabel(id: string) {
-    return categories.find((c) => c.id === id)?.label ?? id
+  const startEdit = (product: any) => {
+    setEditingId(product.id)
+    setEditForm({ ...product })
   }
 
-  function formatPrice(price: number) {
-    return new Intl.NumberFormat("es-AR", {
-      style: "currency",
-      currency: "ARS",
-      maximumFractionDigits: 0,
-    }).format(price)
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditForm(null)
   }
 
-  function handleSave(p: StoreProduct) {
-    if (creating) {
-      addProduct(p)
-    } else {
-      updateProduct(p)
-    }
-    setSavedId(p.id)
-    setTimeout(() => setSavedId(null), 2000)
-    setEditProduct(null)
-    setCreating(false)
-  }
+  const handleSave = async () => {
+    if (!editForm) return
+    setSaving(true)
+    const targetId = editForm.id
+    
+    // 1. Optimistic local update — UI reflects change immediately
+    updateProductLocally(targetId, {
+      name: editForm.name,
+      price: editForm.price,
+      description: editForm.description,
+      image: editForm.image,
+      active: editForm.active,
+    })
+    
+    setEditingId(null)
+    setEditForm(null)
 
-  function handleDelete() {
-    if (deleteId) {
-      deleteProduct(deleteId)
-      setDeleteId(null)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('products')
+        .update({
+          name: editForm.name,
+          price: editForm.price,
+          description: editForm.description,
+          image: editForm.image,
+          active: editForm.active,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', targetId)
+
+      if (error) throw error
+
+      // 2. Bust Next.js cache so server-rendered pages see the new data
+      await fetch('/api/banners/revalidate', { method: 'POST' }).catch(() => {})
+      
+      // 3. Show success indicator after DB confirms
+      setSavedId(targetId)
+      setTimeout(() => setSavedId(null), 3000)
+      
+      // 4. Manual refresh to sync with DB
+      await refreshFromDB()
+    } catch (err) {
+      console.error('[productos-admin] Error saving:', err)
+      // On error, Realtime will eventually correct the state from DB
+    } finally {
+      setSaving(false)
     }
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-6xl">
+    <div className="max-w-7xl space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold text-admin-text">Productos</h1>
-          <p className="text-sm text-admin-muted mt-0.5">{products.length} productos en total</p>
-        </div>
-        <Button
-          onClick={() => setCreating(true)}
-          className="bg-primary hover:bg-primary/90 text-white w-fit"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Nuevo producto
-        </Button>
-      </div>
-
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-admin-muted" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar productos..."
-          className="pl-9 bg-white border-admin-border text-admin-text"
-        />
-      </div>
-
-      {/* Table */}
-      <div className="bg-white border border-admin-border rounded-xl overflow-hidden">
-        {/* Table header */}
-        <div className="grid grid-cols-[56px_1fr_140px_120px_100px_100px] gap-4 px-4 py-3 border-b border-admin-border bg-admin-bg">
-          <p className="text-xs font-medium text-admin-muted uppercase tracking-wide"></p>
-          <p className="text-xs font-medium text-admin-muted uppercase tracking-wide">Producto</p>
-          <p className="text-xs font-medium text-admin-muted uppercase tracking-wide">Categoría</p>
-          <p className="text-xs font-medium text-admin-muted uppercase tracking-wide">Precio</p>
-          <p className="text-xs font-medium text-admin-muted uppercase tracking-wide">Estado</p>
-          <p className="text-xs font-medium text-admin-muted uppercase tracking-wide text-right">Acciones</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#243329]/35 mb-2">
+            Panel interno
+          </p>
+          <h1 className="font-serif text-4xl font-bold text-[#243329] leading-tight">
+            Gestionar Productos
+          </h1>
+          <p className="text-sm text-[#243329]/60 mt-2">
+            Editá precios, imágenes y descripciones. Los cambios se reflejan en tiempo real.
+          </p>
         </div>
 
-        {/* Rows */}
-        {filtered.length === 0 ? (
-          <div className="py-16 text-center text-admin-muted">
-            <p className="text-sm">No se encontraron productos.</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-admin-border">
-            {filtered.map((product) => (
+        {/* Realtime status badge */}
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${
+          status === 'connected'
+            ? 'bg-green-50 text-green-700 border-green-200'
+            : status === 'connecting'
+            ? 'bg-amber-50 text-amber-700 border-amber-200'
+            : 'bg-red-50 text-red-700 border-red-200'
+        }`}>
+          {status === 'connected' ? (
+            <><Wifi className="w-3.5 h-3.5" /> En vivo</>
+          ) : status === 'connecting' ? (
+            <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Conectando</>
+          ) : (
+            <><WifiOff className="w-3.5 h-3.5" /> Sin conexión</>
+          )}
+        </div>
+      </div>
+
+      {/* Realtime info bar */}
+      {status === 'connected' && (
+        <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-100 rounded-xl text-xs text-green-700">
+          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
+          Sincronización activa — Los cambios en precios e imágenes se ven enseguida en la web y en todas las sesiones.
+        </div>
+      )}
+
+      {/* Products Table */}
+      {loading ? (
+        <div className="space-y-2">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-16 bg-white border border-[#243329]/10 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3 bg-white rounded-xl border border-[#243329]/10 overflow-hidden">
+          {products.map((product) => {
+            const isEditing = editingId === product.id
+            const isSaved = savedId === product.id
+
+            return (
               <div
                 key={product.id}
-                className="grid grid-cols-[56px_1fr_140px_120px_100px_100px] gap-4 px-4 py-3 items-center hover:bg-admin-bg/50 transition-colors"
+                className={`p-4 border-b border-[#243329]/10 last:border-b-0 transition-all duration-200 ${
+                  isEditing ? 'bg-[#F5EFE8]/40' : 'hover:bg-[#F5EFE8]/20'
+                } ${isSaved ? 'bg-green-50/30' : ''}`}
               >
-                {/* Image */}
-                <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-admin-bg border border-admin-border flex-shrink-0">
-                  {product.image ? (
-                    <Image src={product.image} alt={product.name} fill className="object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-admin-bg" />
-                  )}
-                </div>
+                {isEditing ? (
+                  // Edit Mode
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Name */}
+                      <div>
+                        <label className="block text-xs font-semibold text-[#243329]/60 mb-1">
+                          Nombre
+                        </label>
+                        <Input
+                          value={editForm.name}
+                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                          className="bg-white border-[#243329]/15 text-sm"
+                        />
+                      </div>
 
-                {/* Name + description */}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-admin-text text-sm truncate">{product.name}</p>
-                    {savedId === product.id && (
-                      <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
-                    )}
+                      {/* Price */}
+                      <div>
+                        <label className="block text-xs font-semibold text-[#243329]/60 mb-1">
+                          Precio ($)
+                        </label>
+                        <Input
+                          type="number"
+                          value={editForm.price}
+                          onChange={(e) => setEditForm({ ...editForm, price: parseFloat(e.target.value) || 0 })}
+                          className="bg-white border-[#243329]/15 text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label className="block text-xs font-semibold text-[#243329]/60 mb-1">
+                        Descripción
+                      </label>
+                      <Textarea
+                        value={editForm.description}
+                        onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                        rows={2}
+                        className="bg-white border-[#243329]/15 text-sm resize-none"
+                      />
+                    </div>
+
+                    {/* Image URL */}
+                    <div>
+                      <label className="block text-xs font-semibold text-[#243329]/60 mb-1">
+                        URL de imagen
+                      </label>
+                      <Textarea
+                        value={editForm.image}
+                        onChange={(e) => setEditForm({ ...editForm, image: e.target.value })}
+                        rows={2}
+                        className="bg-white border-[#243329]/15 text-sm font-mono text-[11px] resize-none"
+                      />
+                    </div>
+
+                    {/* Active toggle */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={editForm.active}
+                        onChange={(e) => setEditForm({ ...editForm, active: e.target.checked })}
+                        className="rounded border-[#243329]/20"
+                      />
+                      <label className="text-xs font-medium text-[#243329]">Producto activo</label>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex-1 bg-[#C4322B] hover:bg-[#C4322B]/90 text-white text-xs font-semibold"
+                      >
+                        {saving ? (
+                          <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> Guardando...</>
+                        ) : (
+                          <><Save className="w-3.5 h-3.5 mr-1" /> Guardar cambios</>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={cancelEdit}
+                        variant="outline"
+                        className="flex-1 text-xs font-semibold"
+                      >
+                        <X className="w-3.5 h-3.5 mr-1" /> Cancelar
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-xs text-admin-muted truncate mt-0.5">{product.description}</p>
-                </div>
+                ) : (
+                  // View Mode
+                  <div className="flex items-center gap-4">
+                    {/* Product Image */}
+                    <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-[#F5EFE8]">
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        width={64}
+                        height={64}
+                        className="w-full h-full object-cover"
+                        unoptimized
+                      />
+                    </div>
 
-                {/* Category */}
-                <p className="text-sm text-admin-muted">{getCategoryLabel(product.category)}</p>
+                    {/* Product Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-[#243329] truncate">
+                          {product.name}
+                        </h3>
+                        {!product.active && (
+                          <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-semibold rounded">
+                            Inactivo
+                          </span>
+                        )}
+                        {isSaved && (
+                          <span className="flex items-center gap-1 text-green-700 text-xs font-medium">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Actualizado
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-[#243329]/60 line-clamp-1 mt-0.5">
+                        {product.description}
+                      </p>
+                      <p className="text-sm font-bold text-[#C4322B] mt-1">
+                        ${product.price.toLocaleString()}
+                      </p>
+                    </div>
 
-                {/* Price */}
-                <p className="text-sm font-medium text-admin-text">{formatPrice(product.price)}</p>
-
-                {/* Status */}
-                <Badge
-                  variant="outline"
-                  className={
-                    product.active
-                      ? "border-green-200 bg-green-50 text-green-700"
-                      : "border-admin-border bg-admin-bg text-admin-muted"
-                  }
-                >
-                  {product.active ? "Activo" : "Inactivo"}
-                </Badge>
-
-                {/* Actions */}
-                <div className="flex items-center gap-1 justify-end">
-                  <button
-                    onClick={() => setEditProduct(product)}
-                    className="p-1.5 rounded-lg text-admin-muted hover:text-primary hover:bg-primary/10 transition-colors"
-                    title="Editar"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setDeleteId(product.id)}
-                    className="p-1.5 rounded-lg text-admin-muted hover:text-red-500 hover:bg-red-50 transition-colors"
-                    title="Eliminar"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                    {/* Edit Button */}
+                    <Button
+                      onClick={() => startEdit(product)}
+                      variant="outline"
+                      size="sm"
+                      className="flex-shrink-0"
+                    >
+                      <Edit2 className="w-4 h-4 mr-1" /> Editar
+                    </Button>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Edit dialog */}
-      <Dialog
-        open={!!editProduct || creating}
-        onOpenChange={(open) => {
-          if (!open) {
-            setEditProduct(null)
-            setCreating(false)
-          }
-        }}
-      >
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white">
-          <DialogHeader>
-            <DialogTitle className="text-admin-text">
-              {creating ? "Nuevo producto" : "Editar producto"}
-            </DialogTitle>
-          </DialogHeader>
-          <ProductForm
-            product={editProduct ?? undefined}
-            onSave={handleSave}
-            onCancel={() => {
-              setEditProduct(null)
-              setCreating(false)
-            }}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete confirm */}
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent className="bg-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-admin-text">Eliminar producto</AlertDialogTitle>
-            <AlertDialogDescription className="text-admin-muted">
-              Esta acción no se puede deshacer. El producto será eliminado del catálogo.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="border-admin-border text-admin-text">
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-red-500 hover:bg-red-600 text-white"
-            >
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
+
