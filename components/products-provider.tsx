@@ -55,16 +55,17 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
             order_index,
             created_at,
             updated_at,
-            categories!inner(name)
+            categories(label, slug)
           `)
           .order('order_index', { ascending: true })
         
         if (error) throw error
         
-        // Transform data to include category name
+        // categories.label is the human-readable name (e.g. "Pizzas")
         const transformed = (data as any[])?.map((item: any) => ({
           ...item,
-          category: item.categories?.name || 'Sin categoría',
+          category: item.categories?.label || 'Sin categoría',
+          category_slug: item.categories?.slug || '',
         })) ?? []
         
         console.log('[v0] Products: loaded', transformed.length, 'items')
@@ -174,7 +175,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
           order_index,
           created_at,
           updated_at,
-          categories!inner(name)
+          categories(label, slug)
         `)
         .order('order_index', { ascending: true })
       
@@ -182,7 +183,8 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       
       const transformed = (data as any[])?.map((item: any) => ({
         ...item,
-        category: item.categories?.name || 'Sin categoría',
+        category: item.categories?.label || 'Sin categoría',
+        category_slug: item.categories?.slug || '',
       })) ?? []
       
       setProducts(transformed as Product[])
