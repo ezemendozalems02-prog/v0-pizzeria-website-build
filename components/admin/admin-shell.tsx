@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
-import Image from "next/image"
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -106,16 +105,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       >
         {/* Logo */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-sidebar-border">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/images/logo.png"
-              alt="Totore Logo"
-              width={120}
-              height={30}
-              priority
-              className="h-8 w-auto"
-            />
-            <p className="text-xs text-white/50 mt-0.5">Admin</p>
+          <div>
+            <span className="font-serif text-xl font-bold text-white tracking-wide">TOTORE</span>
+            <p className="text-xs text-white/50 mt-0.5">Panel de Admin</p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}

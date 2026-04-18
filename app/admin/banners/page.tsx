@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/client'
 import { useBannersContext, type Banner } from '@/components/banners-provider'
 import Image from 'next/image'
 import { Wifi, WifiOff, Loader2, CheckCircle2, ImageIcon } from 'lucide-react'
-import { ImageUploader } from '@/components/image-uploader'
 
 const PAGE_NAMES: Record<string, string> = {
   'home': 'Home — Principal',
@@ -21,6 +20,7 @@ export default function BannersAdminPage() {
   const [editing, setEditing] = useState<{ id: string; image_url: string } | null>(null)
   const [saving, setSaving] = useState(false)
   const [savedId, setSavedId] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string>('')
 
   const sorted = [...banners].sort(
     (a, b) => KEY_ORDER.indexOf(a.key) - KEY_ORDER.indexOf(b.key)
@@ -28,10 +28,12 @@ export default function BannersAdminPage() {
 
   const startEdit = (banner: Banner) => {
     setEditing({ id: banner.id, image_url: banner.image_url })
+    setPreviewUrl(banner.image_url)
   }
 
-  const handleImageChange = (url: string) => {
-    setEditing((e) => e ? { ...e, image_url: url } : e)
+  const handleUrlChange = (val: string) => {
+    setEditing((e) => e ? { ...e, image_url: val } : e)
+    setPreviewUrl(val)
   }
 
   const handleSave = async () => {
@@ -42,6 +44,7 @@ export default function BannersAdminPage() {
     // 1. Optimistic local update — UI reflects change immediately
     updateBannerLocally(targetId, newUrl)
     setEditing(null)
+    setPreviewUrl('')
     try {
       const supabase = createClient()
       const { error } = await supabase
@@ -122,7 +125,7 @@ export default function BannersAdminPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {sorted.map((banner) => {
             const isEditing = editing?.id === banner.id
-            const currentPreview = isEditing ? editing.image_url : banner.image_url
+            const currentPreview = isEditing ? previewUrl : banner.image_url
 
             return (
               <div
@@ -151,6 +154,13 @@ export default function BannersAdminPage() {
                     </div>
                   )}
 
+                  {/* Live indicator when editing */}
+                  {isEditing && previewUrl && (
+                    <div className="absolute top-3 right-3 px-2 py-1 bg-black/60 text-white text-[10px] rounded-full font-medium">
+                      Vista previa
+                    </div>
+                  )}
+
                   {/* Saved flash */}
                   {savedId === banner.id && (
                     <div className="absolute inset-0 bg-green-500/10 flex items-center justify-center">
@@ -174,13 +184,20 @@ export default function BannersAdminPage() {
                   </p>
 
                   {isEditing ? (
-                    <div className="space-y-4">
-                      <ImageUploader
-                        value={editing.image_url}
-                        onChange={handleImageChange}
-                        label={PAGE_NAMES[banner.key] ?? banner.key}
-                        height={180}
-                      />
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-[#243329]/60 mb-1.5">
+                          URL de la imagen
+                        </label>
+                        <textarea
+                          value={editing.image_url}
+                          onChange={(e) => handleUrlChange(e.target.value)}
+                          placeholder="https://..."
+                          rows={3}
+                          autoFocus
+                          className="w-full px-3 py-2 text-xs border border-[#243329]/15 rounded-xl bg-[#F5EFE8]/60 text-[#243329] placeholder:text-[#243329]/25 focus:outline-none focus:ring-2 focus:ring-[#C4322B]/20 focus:border-[#C4322B]/40 resize-none transition-all font-mono"
+                        />
+                      </div>
                       <div className="flex gap-2">
                         <button
                           onClick={handleSave}
@@ -194,7 +211,7 @@ export default function BannersAdminPage() {
                           )}
                         </button>
                         <button
-                          onClick={() => setEditing(null)}
+                          onClick={() => { setEditing(null); setPreviewUrl('') }}
                           className="flex-1 py-2.5 bg-[#F5EFE8] text-[#243329] text-xs font-semibold rounded-lg hover:bg-[#243329]/10 transition-colors"
                         >
                           Cancelar
@@ -215,7 +232,6 @@ export default function BannersAdminPage() {
           })}
         </div>
       )}
-
     </div>
   )
 }

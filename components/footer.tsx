@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
 import { Instagram, MessageCircle } from "lucide-react"
 import { useStore } from "@/lib/store"
 
@@ -23,13 +22,9 @@ export function Footer() {
           {/* Brand */}
           <div>
             <Link href="/" className="inline-block">
-              <Image
-                src="/images/logo.png"
-                alt="Totore Logo"
-                width={140}
-                height={35}
-                className="h-10 w-auto"
-              />
+              <span className="font-serif text-2xl font-bold text-primary-foreground tracking-tight">
+                TOTORE
+              </span>
             </Link>
             <p className="mt-3 text-secondary-foreground/80 text-sm leading-relaxed">
               {config.footerText}

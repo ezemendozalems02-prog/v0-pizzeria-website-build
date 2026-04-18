@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
 import { useState } from "react"
 import { Menu, X, ShoppingCart } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
@@ -25,14 +24,9 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <Image
-              src="/images/logo.png"
-              alt="Totore Logo"
-              width={180}
-              height={50}
-              priority
-              className="h-12 w-auto"
-            />
+            <span className="font-serif text-2xl font-bold text-primary tracking-tight">
+              TOTORE
+            </span>
           </Link>
 
           {/* Desktop Navigation */}

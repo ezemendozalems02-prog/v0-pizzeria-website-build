@@ -6,28 +6,24 @@ import { Search, ShoppingCart } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/lib/cart-context"
-import { useProductsContext } from "@/components/products-provider"
+import { useStore } from "@/lib/store"
+import { categories as staticCategories, type CategoryId, type Product } from "@/lib/products"
 
 export function DeliveryCatalog() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeCategory, setActiveCategory] = useState<string>("todas")
+  const [activeCategory, setActiveCategory] = useState<CategoryId>("todas")
   const { addItem, setIsCartOpen, totalItems } = useCart()
-  const { products, loading } = useProductsContext()
+  const { products: storeProducts, categories: storeCategories } = useStore()
 
-  // Filter active products only
-  const activeProducts = products.filter((p) => p.active)
-
-  // Get unique categories dynamically
-  const categories = useMemo(() => {
-    const unique = new Set(activeProducts.map((p) => p.category))
-    return [
-      { id: "todas", label: "Todas" },
-      ...Array.from(unique).map((cat) => ({ id: cat, label: cat.charAt(0).toUpperCase() + cat.slice(1) })),
-    ]
-  }, [activeProducts])
+  // Use active products from store, fall back gracefully
+  const products = storeProducts.filter((p) => p.active)
+  const categories = [
+    { id: "todas", label: "Todas" },
+    ...storeCategories,
+  ]
 
   const filteredProducts = useMemo(() => {
-    return activeProducts.filter((product) => {
+    return products.filter((product) => {
       const matchesSearch = product.name
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
@@ -35,17 +31,20 @@ export function DeliveryCatalog() {
         activeCategory === "todas" || product.category === activeCategory
       return matchesSearch && matchesCategory
     })
-  }, [searchQuery, activeCategory, activeProducts])
+  }, [searchQuery, activeCategory, products])
 
-  // Group by category
+  // Group by category dynamically
   const grouped = useMemo(() => {
-    const map: Record<string, typeof activeProducts> = {}
+    const map: Record<string, typeof products> = {}
     for (const p of filteredProducts) {
       if (!map[p.category]) map[p.category] = []
       map[p.category].push(p)
     }
     return map
   }, [filteredProducts])
+
+  const pizzas = grouped["pizzas"] ?? []
+  const bebidas = grouped["bebidas"] ?? []
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("es-AR", {
@@ -55,7 +54,7 @@ export function DeliveryCatalog() {
     }).format(price)
   }
 
-  const handleAddItem = (product: typeof activeProducts[0]) => {
+  const handleAddItem = (product: Product) => {
     addItem({
       id: product.id,
       name: product.name,
@@ -65,31 +64,10 @@ export function DeliveryCatalog() {
     })
   }
 
-  if (loading) {
-    return (
-      <section className="py-8 sm:py-12 bg-background">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-card rounded-xl border border-border overflow-hidden animate-pulse">
-                <div className="h-40 bg-muted" />
-                <div className="p-4 space-y-2">
-                  <div className="h-5 bg-muted rounded w-2/3" />
-                  <div className="h-3 bg-muted rounded w-full" />
-                  <div className="h-8 bg-muted rounded mt-3" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    )
-  }
-
   return (
     <section className="py-8 sm:py-12 bg-background">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Search and Filters */}
+        {/* Search and Filters - Sticky on mobile */}
         <div className="sticky top-16 z-30 bg-background pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:static">
           <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
             {/* Search */}
@@ -143,23 +121,45 @@ export function DeliveryCatalog() {
 
         {/* Products Grid */}
         <div className="mt-8 space-y-12">
-          {Object.entries(grouped).map(([category, categoryProducts]) => (
-            <div key={category}>
-              <h2 className="font-serif text-2xl font-bold text-foreground mb-6 capitalize">
-                {category}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {categoryProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onAdd={() => handleAddItem(product)}
-                    formatPrice={formatPrice}
-                  />
-                ))}
+          {/* Pizzas Section */}
+          {(activeCategory === "todas" || activeCategory === "pizzas") &&
+            pizzas.length > 0 && (
+              <div>
+                <h2 className="font-serif text-2xl font-bold text-foreground mb-6">
+                  Pizzas
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {pizzas.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onAdd={() => handleAddItem(product)}
+                      formatPrice={formatPrice}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            )}
+
+          {/* Bebidas Section */}
+          {(activeCategory === "todas" || activeCategory === "bebidas") &&
+            bebidas.length > 0 && (
+              <div>
+                <h2 className="font-serif text-2xl font-bold text-foreground mb-6">
+                  Bebidas
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {bebidas.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onAdd={() => handleAddItem(product)}
+                      formatPrice={formatPrice}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
           {/* No Results */}
           {filteredProducts.length === 0 && (
@@ -190,7 +190,7 @@ function ProductCard({
   onAdd,
   formatPrice,
 }: {
-  product: any
+  product: Product
   onAdd: () => void
   formatPrice: (price: number) => string
 }) {
@@ -204,7 +204,6 @@ function ProductCard({
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          unoptimized
         />
       </div>
 
