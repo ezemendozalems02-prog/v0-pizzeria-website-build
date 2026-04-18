@@ -1,21 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useBanners, type Banner } from '@/hooks/use-banners'
 import Image from 'next/image'
-
-interface Banner {
-  id: string
-  key: string
-  image_url: string
-  overlay_text: string
-  overlay_button_text: string
-  overlay_button_link: string
-  updated_at: string
-}
+import { Wifi, WifiOff, Loader2, CheckCircle2, ImageIcon } from 'lucide-react'
 
 const PAGE_NAMES: Record<string, string> = {
-  'home': 'Home - Principal',
+  'home': 'Home — Principal',
   'sobre-nosotros': 'Sobre Nosotros',
   'contacto': 'Contacto',
   'pedido-delivery': 'Pedido Delivery',
@@ -24,27 +16,25 @@ const PAGE_NAMES: Record<string, string> = {
 const KEY_ORDER = ['home', 'sobre-nosotros', 'contacto', 'pedido-delivery']
 
 export default function BannersAdminPage() {
-  const [banners, setBanners] = useState<Banner[]>([])
-  const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState<Banner | null>(null)
+  const { banners, loading, status } = useBanners()
+  const [editing, setEditing] = useState<{ id: string; image_url: string } | null>(null)
   const [saving, setSaving] = useState(false)
   const [savedId, setSavedId] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string>('')
 
-  useEffect(() => {
-    const load = async () => {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('banners')
-        .select('*')
-      if (error) console.error('[v0] Error loading banners:', error)
-      const sorted = (data as Banner[] ?? []).sort(
-        (a, b) => KEY_ORDER.indexOf(a.key) - KEY_ORDER.indexOf(b.key)
-      )
-      setBanners(sorted)
-      setLoading(false)
-    }
-    load()
-  }, [])
+  const sorted = [...banners].sort(
+    (a, b) => KEY_ORDER.indexOf(a.key) - KEY_ORDER.indexOf(b.key)
+  )
+
+  const startEdit = (banner: Banner) => {
+    setEditing({ id: banner.id, image_url: banner.image_url })
+    setPreviewUrl(banner.image_url)
+  }
+
+  const handleUrlChange = (val: string) => {
+    setEditing((e) => e ? { ...e, image_url: val } : e)
+    setPreviewUrl(val)
+  }
 
   const handleSave = async () => {
     if (!editing) return
@@ -53,13 +43,13 @@ export default function BannersAdminPage() {
       const supabase = createClient()
       const { error } = await supabase
         .from('banners')
-        .update({ image_url: editing.image_url })
+        .update({ image_url: editing.image_url, updated_at: new Date().toISOString() })
         .eq('id', editing.id)
       if (error) throw error
-      setBanners(banners.map(b => b.id === editing.id ? editing : b))
       setSavedId(editing.id)
-      setTimeout(() => setSavedId(null), 2500)
+      setTimeout(() => setSavedId(null), 3000)
       setEditing(null)
+      setPreviewUrl('')
     } catch (err) {
       console.error('[v0] Error saving banner:', err)
     } finally {
@@ -70,27 +60,54 @@ export default function BannersAdminPage() {
   return (
     <div className="max-w-5xl space-y-8">
       {/* Header */}
-      <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#243329]/35 mb-2">
-          Panel interno
-        </p>
-        <h1 className="font-serif text-4xl font-bold text-[#243329] leading-tight">
-          Gestionar Banners
-        </h1>
-        <p className="text-sm text-[#243329]/60 mt-2">
-          Editá las imágenes de los banners para cada sección del sitio.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#243329]/35 mb-2">
+            Panel interno
+          </p>
+          <h1 className="font-serif text-4xl font-bold text-[#243329] leading-tight">
+            Gestionar Banners
+          </h1>
+          <p className="text-sm text-[#243329]/60 mt-2">
+            Editá las imágenes de los banners. Los cambios se reflejan en el sitio en tiempo real.
+          </p>
+        </div>
+
+        {/* Realtime status badge */}
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${
+          status === 'connected'
+            ? 'bg-green-50 text-green-700 border-green-200'
+            : status === 'connecting'
+            ? 'bg-amber-50 text-amber-700 border-amber-200'
+            : 'bg-red-50 text-red-700 border-red-200'
+        }`}>
+          {status === 'connected' ? (
+            <><Wifi className="w-3.5 h-3.5" /> En vivo</>
+          ) : status === 'connecting' ? (
+            <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Conectando</>
+          ) : (
+            <><WifiOff className="w-3.5 h-3.5" /> Sin conexión</>
+          )}
+        </div>
       </div>
+
+      {/* Realtime info bar */}
+      {status === 'connected' && (
+        <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-100 rounded-xl text-xs text-green-700">
+          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
+          Sincronización activa — Los cambios que guardes se aplican al instante en todas las secciones del sitio sin recargar la página.
+        </div>
+      )}
 
       {/* Banners Grid */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="bg-white border border-[#243329]/10 rounded-2xl overflow-hidden animate-pulse">
-              <div className="h-44 bg-[#F5EFE8]" />
+              <div className="h-48 bg-[#F5EFE8]" />
               <div className="p-6 space-y-3">
                 <div className="h-5 bg-[#F5EFE8] rounded w-1/2" />
-                <div className="h-4 bg-[#F5EFE8] rounded w-full" />
+                <div className="h-3 bg-[#F5EFE8] rounded w-full" />
                 <div className="h-9 bg-[#F5EFE8] rounded-lg" />
               </div>
             </div>
@@ -98,75 +115,113 @@ export default function BannersAdminPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {banners.map((banner) => (
-            <div key={banner.id} className="bg-white border border-[#243329]/10 rounded-2xl overflow-hidden">
-              {/* Preview */}
-              <div className="relative h-44 bg-[#F5EFE8]">
-                {banner.image_url ? (
-                  <Image
-                    src={banner.image_url}
-                    alt={PAGE_NAMES[banner.key] ?? banner.key}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[#243329]/20 text-sm">
-                    Sin imagen
-                  </div>
-                )}
-              </div>
+          {sorted.map((banner) => {
+            const isEditing = editing?.id === banner.id
+            const currentPreview = isEditing ? previewUrl : banner.image_url
 
-              {/* Info */}
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-serif text-xl font-bold text-[#243329]">
-                    {PAGE_NAMES[banner.key] ?? banner.key}
-                  </h3>
+            return (
+              <div
+                key={banner.id}
+                className={`bg-white border rounded-2xl overflow-hidden transition-all duration-200 ${
+                  isEditing
+                    ? 'border-[#C4322B]/30 ring-2 ring-[#C4322B]/10'
+                    : 'border-[#243329]/10 hover:border-[#243329]/20'
+                }`}
+              >
+                {/* Preview */}
+                <div className="relative h-48 bg-[#F5EFE8]">
+                  {currentPreview ? (
+                    <Image
+                      src={currentPreview}
+                      alt={PAGE_NAMES[banner.key] ?? banner.key}
+                      fill
+                      className="object-cover transition-all duration-500"
+                      unoptimized
+                      key={currentPreview}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-[#243329]/20">
+                      <ImageIcon className="w-8 h-8" />
+                      <span className="text-xs">Sin imagen</span>
+                    </div>
+                  )}
+
+                  {/* Live indicator when editing */}
+                  {isEditing && previewUrl && (
+                    <div className="absolute top-3 right-3 px-2 py-1 bg-black/60 text-white text-[10px] rounded-full font-medium">
+                      Vista previa
+                    </div>
+                  )}
+
+                  {/* Saved flash */}
                   {savedId === banner.id && (
-                    <span className="text-xs text-green-600 font-medium">Guardado</span>
+                    <div className="absolute inset-0 bg-green-500/10 flex items-center justify-center">
+                      <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-lg text-green-700 text-sm font-semibold">
+                        <CheckCircle2 className="w-4 h-4" />
+                        Actualizado en tiempo real
+                      </div>
+                    </div>
                   )}
                 </div>
-                <p className="text-xs text-[#243329]/40 mb-4 font-mono truncate">
-                  {banner.image_url || 'Sin URL configurada'}
-                </p>
 
-                {editing?.id === banner.id ? (
-                  <div className="space-y-3">
-                    <textarea
-                      value={editing.image_url}
-                      onChange={(e) => setEditing({ ...editing, image_url: e.target.value })}
-                      placeholder="https://..."
-                      rows={3}
-                      className="w-full px-3 py-2 text-xs border border-[#243329]/15 rounded-xl bg-[#F5EFE8]/60 text-[#243329] placeholder:text-[#243329]/30 focus:outline-none focus:ring-1 focus:ring-[#C4322B]/30 resize-none transition-all"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="flex-1 py-2 bg-[#C4322B] text-white text-xs font-semibold rounded-lg hover:bg-[#C4322B]/90 disabled:opacity-50 transition-colors"
-                      >
-                        {saving ? 'Guardando...' : 'Guardar'}
-                      </button>
-                      <button
-                        onClick={() => setEditing(null)}
-                        className="flex-1 py-2 bg-[#F5EFE8] text-[#243329] text-xs font-semibold rounded-lg hover:bg-[#243329]/10 transition-colors"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
+                {/* Card body */}
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-serif text-lg font-bold text-[#243329]">
+                      {PAGE_NAMES[banner.key] ?? banner.key}
+                    </h3>
                   </div>
-                ) : (
-                  <button
-                    onClick={() => setEditing(banner)}
-                    className="w-full py-2 bg-[#F5EFE8] text-[#243329] text-xs font-semibold rounded-lg hover:bg-[#243329]/10 transition-colors"
-                  >
-                    Editar imagen
-                  </button>
-                )}
+                  <p className="text-[11px] text-[#243329]/35 mb-5 font-mono truncate">
+                    {banner.image_url || 'Sin URL configurada'}
+                  </p>
+
+                  {isEditing ? (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-[#243329]/60 mb-1.5">
+                          URL de la imagen
+                        </label>
+                        <textarea
+                          value={editing.image_url}
+                          onChange={(e) => handleUrlChange(e.target.value)}
+                          placeholder="https://..."
+                          rows={3}
+                          autoFocus
+                          className="w-full px-3 py-2 text-xs border border-[#243329]/15 rounded-xl bg-[#F5EFE8]/60 text-[#243329] placeholder:text-[#243329]/25 focus:outline-none focus:ring-2 focus:ring-[#C4322B]/20 focus:border-[#C4322B]/40 resize-none transition-all font-mono"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleSave}
+                          disabled={saving || !editing.image_url.trim()}
+                          className="flex-1 py-2.5 bg-[#C4322B] text-white text-xs font-semibold rounded-lg hover:bg-[#C4322B]/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
+                        >
+                          {saving ? (
+                            <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Guardando...</>
+                          ) : (
+                            'Guardar y publicar'
+                          )}
+                        </button>
+                        <button
+                          onClick={() => { setEditing(null); setPreviewUrl('') }}
+                          className="flex-1 py-2.5 bg-[#F5EFE8] text-[#243329] text-xs font-semibold rounded-lg hover:bg-[#243329]/10 transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => startEdit(banner)}
+                      className="w-full py-2.5 bg-[#F5EFE8] text-[#243329] text-xs font-semibold rounded-lg hover:bg-[#243329]/8 transition-colors"
+                    >
+                      Editar imagen
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

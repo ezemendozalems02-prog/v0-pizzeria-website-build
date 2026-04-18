@@ -1,4 +1,5 @@
 import Image from "next/image"
+import { RealtimeBanner } from "@/components/realtime-banner"
 
 export const metadata = {
   title: "Sobre Nosotros | Totore",
@@ -9,17 +10,13 @@ export default function AboutPage() {
   return (
     <>
       {/* Hero Banner */}
-      <section className="relative h-[40vh] min-h-[300px]">
-        <div className="absolute inset-0">
-          <Image
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20nosotros%20%281%29-S5TVL5cAsT2OhrRLD5w5p32uM45UTX.jpg"
-            alt="Nosotros - TOTORE"
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
-      </section>
+      <RealtimeBanner
+        bannerKey="sobre-nosotros"
+        fallbackUrl="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20nosotros%20%281%29-S5TVL5cAsT2OhrRLD5w5p32uM45UTX.jpg"
+        alt="Nosotros - TOTORE"
+        className="relative h-[40vh] min-h-[300px]"
+        priority
+      />
 
       {/* Our Story Section */}
       <section className="py-20 bg-background">

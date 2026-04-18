@@ -2,22 +2,20 @@ import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { MapPin, Clock, ArrowRight } from "lucide-react"
+import { RealtimeBanner } from "@/components/realtime-banner"
 
 export default function HomePage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center">
-        <div className="absolute inset-0">
-          <Image
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20principal%20inicio-sgLjm1UietPhuULpK6QoJWyqFRFgFj.jpg"
-            alt="Pizza napolitana artesanal - TOTORE fresco, auténtica"
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 flex items-end min-h-[90vh]">
+      <RealtimeBanner
+        bannerKey="home"
+        fallbackUrl="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20principal%20inicio-sgLjm1UietPhuULpK6QoJWyqFRFgFj.jpg"
+        alt="Pizza napolitana artesanal - TOTORE fresco, auténtica"
+        className="relative min-h-[90vh] flex items-center"
+        priority
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 flex items-end min-h-[90vh]">
           <div className="flex flex-col sm:flex-row gap-4">
             <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
               <Link href="/pedido-delivery">
@@ -32,7 +30,7 @@ export default function HomePage() {
             </Button>
           </div>
         </div>
-      </section>
+      </RealtimeBanner>
 
       {/* Experience Section */}
       <section className="py-20 bg-background">

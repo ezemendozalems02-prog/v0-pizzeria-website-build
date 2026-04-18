@@ -1,4 +1,4 @@
-import Image from "next/image"
+import { RealtimeBanner } from "@/components/realtime-banner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,17 +13,13 @@ export default function ContactPage() {
   return (
     <>
       {/* Hero Banner */}
-      <section className="relative h-[40vh] min-h-[300px]">
-        <div className="absolute inset-0">
-          <Image
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20contacto%20-mOHjngdnmrB7nJQdJtJvtjPuSjFijx.jpg"
-            alt="Contacto - TOTORE"
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
-      </section>
+      <RealtimeBanner
+        bannerKey="contacto"
+        fallbackUrl="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20contacto%20-mOHjngdnmrB7nJQdJtJvtjPuSjFijx.jpg"
+        alt="Contacto - TOTORE"
+        className="relative h-[40vh] min-h-[300px]"
+        priority
+      />
 
       {/* Contact Section */}
       <section className="py-20 bg-background">
