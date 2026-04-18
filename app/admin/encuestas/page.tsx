@@ -9,7 +9,7 @@ import { X } from 'lucide-react'
 // DB CHECK values: 'bad' | 'good' | 'excellent'
 type RatingValue = 'bad' | 'good' | 'excellent' | null
 // DB CHECK values: 'delivery' | 'pickup' | 'local'
-type OrderOrigin = 'delivery' | 'pickup' | 'local' | null
+type OrderOrigin = 'delivery' | 'pickup' | null
 type TimeFilter = 'today' | 'week' | 'all'
 type SortOption = 'recent' | 'best' | 'worst'
 
@@ -51,7 +51,6 @@ function avgNum(responses: SurveyResponse[], key: keyof SurveyResponse): number 
 
 const ORIGIN_LABELS: Record<string, string> = {
   delivery: 'Delivery',
-  local: 'En el local',
   pickup: 'Retiro',
 }
 
@@ -91,7 +90,6 @@ function OriginBadge({ value }: { value: OrderOrigin }) {
   if (!value) return <span className="text-[#243329]/25 text-xs">—</span>
   const map: Record<string, string> = {
     delivery: 'bg-[#F5EFE8] text-[#243329]/70 border border-[#243329]/15',
-    local:    'bg-[#F5EFE8] text-[#243329]/70 border border-[#243329]/15',
     pickup:   'bg-[#F5EFE8] text-[#243329]/70 border border-[#243329]/15',
   }
   return (

@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 type Rating = 'bad' | 'ok' | 'good' | null
-type Experience = 'delivery' | 'local' | 'retiro' | null
+type Experience = 'delivery' | 'retiro' | null
 
 export default function EncuestaPage() {
   const [submitted, setSubmitted] = useState(false)
@@ -281,17 +281,6 @@ export default function EncuestaPage() {
                 onClick={() => {
                   setExperience('delivery')
                   triggerFeedback('exp-delivery')
-                }}
-              />
-              <ExperienceCard
-                value="local"
-                title="Local"
-                subtitle="CONSUMICION EN EL LOCAL"
-                selected={experience === 'local'}
-                justSelected={justSelected === 'exp-local'}
-                onClick={() => {
-                  setExperience('local')
-                  triggerFeedback('exp-local')
                 }}
               />
               <ExperienceCard
