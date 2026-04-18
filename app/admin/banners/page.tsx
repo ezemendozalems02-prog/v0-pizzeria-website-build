@@ -39,6 +39,8 @@ export default function BannersAdminPage() {
       console.error('[banners-admin] Upload error:', err)
     } finally {
       setUploading(false)
+      // Reset file input so se puede subir el mismo archivo de nuevo
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -218,17 +220,6 @@ export default function BannersAdminPage() {
                             autoFocus
                             className="flex-1 px-3 py-2 text-xs border border-[#243329]/15 rounded-xl bg-[#F5EFE8]/60 text-[#243329] placeholder:text-[#243329]/25 focus:outline-none focus:ring-2 focus:ring-[#C4322B]/20 focus:border-[#C4322B]/40 resize-none transition-all font-mono"
                           />
-                          {/* Hidden file input */}
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0]
-                              if (file) handleFileUpload(file)
-                            }}
-                          />
                           <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
@@ -277,6 +268,18 @@ export default function BannersAdminPage() {
           })}
         </div>
       )}
+
+      {/* Hidden file input — global for all banners */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) handleFileUpload(file)
+        }}
+      />
     </div>
   )
 }
