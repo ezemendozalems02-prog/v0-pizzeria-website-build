@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useBannersContext, type Banner } from '@/components/banners-provider'
 import Image from 'next/image'
-import { Wifi, WifiOff, Loader2, CheckCircle2, ImageIcon } from 'lucide-react'
+import { Wifi, WifiOff, Loader2, CheckCircle2, ImageIcon, CloudUpload } from 'lucide-react'
 
 const PAGE_NAMES: Record<string, string> = {
   'home': 'Home — Principal',
@@ -19,8 +19,28 @@ export default function BannersAdminPage() {
   const { banners, loading, status, updateBannerLocally } = useBannersContext()
   const [editing, setEditing] = useState<{ id: string; image_url: string } | null>(null)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [savedId, setSavedId] = useState<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string>('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileUpload = async (file: File) => {
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (data.url) {
+        setEditing((e) => e ? { ...e, image_url: data.url } : e)
+        setPreviewUrl(data.url)
+      }
+    } catch (err) {
+      console.error('[banners-admin] Upload error:', err)
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const sorted = [...banners].sort(
     (a, b) => KEY_ORDER.indexOf(a.key) - KEY_ORDER.indexOf(b.key)
@@ -189,19 +209,44 @@ export default function BannersAdminPage() {
                         <label className="block text-xs font-semibold text-[#243329]/60 mb-1.5">
                           URL de la imagen
                         </label>
-                        <textarea
-                          value={editing.image_url}
-                          onChange={(e) => handleUrlChange(e.target.value)}
-                          placeholder="https://..."
-                          rows={3}
-                          autoFocus
-                          className="w-full px-3 py-2 text-xs border border-[#243329]/15 rounded-xl bg-[#F5EFE8]/60 text-[#243329] placeholder:text-[#243329]/25 focus:outline-none focus:ring-2 focus:ring-[#C4322B]/20 focus:border-[#C4322B]/40 resize-none transition-all font-mono"
-                        />
+                        <div className="flex gap-2 items-start">
+                          <textarea
+                            value={editing.image_url}
+                            onChange={(e) => handleUrlChange(e.target.value)}
+                            placeholder="https://... o subí un archivo"
+                            rows={2}
+                            autoFocus
+                            className="flex-1 px-3 py-2 text-xs border border-[#243329]/15 rounded-xl bg-[#F5EFE8]/60 text-[#243329] placeholder:text-[#243329]/25 focus:outline-none focus:ring-2 focus:ring-[#C4322B]/20 focus:border-[#C4322B]/40 resize-none transition-all font-mono"
+                          />
+                          {/* Hidden file input */}
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) handleFileUpload(file)
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploading}
+                            title="Subir imagen desde archivo"
+                            className="w-10 h-10 flex-shrink-0 rounded-xl bg-[#F5EFE8] border border-[#243329]/15 flex items-center justify-center text-[#243329]/60 hover:bg-[#243329]/10 disabled:opacity-50 transition-colors"
+                          >
+                            {uploading
+                              ? <Loader2 className="w-4 h-4 animate-spin" />
+                              : <CloudUpload className="w-4 h-4" />
+                            }
+                          </button>
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <button
                           onClick={handleSave}
-                          disabled={saving || !editing.image_url.trim()}
+                          disabled={saving || uploading || !editing.image_url.trim()}
                           className="flex-1 py-2.5 bg-[#C4322B] text-white text-xs font-semibold rounded-lg hover:bg-[#C4322B]/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
                         >
                           {saving ? (

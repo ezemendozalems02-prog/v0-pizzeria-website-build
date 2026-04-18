@@ -36,42 +36,43 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState<ConnectionStatus>('connecting')
 
+  // Helper: fetch products with category JOIN
+  const fetchProductsWithCategories = useCallback(async (supabase: ReturnType<typeof createClient>) => {
+    const { data, error } = await supabase
+      .from('products')
+      .select(`
+        id,
+        name,
+        price,
+        description,
+        image,
+        active,
+        category_id,
+        order_index,
+        created_at,
+        updated_at,
+        categories(label, slug)
+      `)
+      .order('order_index', { ascending: true })
+
+    if (error) throw error
+
+    return (data as any[])?.map((item: any) => ({
+      ...item,
+      category: item.categories?.label || 'Sin categoría',
+      category_slug: item.categories?.slug || '',
+    })) as Product[] ?? []
+  }, [])
+
   // 1. Initial fetch from Supabase with category JOIN
   useEffect(() => {
     const loadProducts = async () => {
-      console.log('[v0] Products: loading initial data from Supabase')
       const supabase = createClient()
       try {
-        const { data, error } = await supabase
-          .from('products')
-          .select(`
-            id,
-            name,
-            price,
-            description,
-            image,
-            active,
-            category_id,
-            order_index,
-            created_at,
-            updated_at,
-            categories(label, slug)
-          `)
-          .order('order_index', { ascending: true })
-        
-        if (error) throw error
-        
-        // categories.label is the human-readable name (e.g. "Pizzas")
-        const transformed = (data as any[])?.map((item: any) => ({
-          ...item,
-          category: item.categories?.label || 'Sin categoría',
-          category_slug: item.categories?.slug || '',
-        })) ?? []
-        
-        console.log('[v0] Products: loaded', transformed.length, 'items')
-        setProducts(transformed as Product[])
+        const transformed = await fetchProductsWithCategories(supabase)
+        setProducts(transformed)
       } catch (err) {
-        console.error('[v0] Products: load error', err)
+        console.error('[ProductsProvider] load error:', err)
         setStatus('disconnected')
       } finally {
         setLoading(false)
@@ -79,7 +80,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     }
 
     loadProducts()
-  }, [])
+  }, [fetchProductsWithCategories])
 
   // 2. Setup Realtime subscription
   useEffect(() => {
@@ -94,43 +95,58 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
         .on(
           'postgres_changes',
           { event: 'UPDATE', schema: 'public', table: 'products' },
-          (payload) => {
-            const updated = payload.new as Product
-            console.log('[v0] Products: Realtime UPDATE', updated.id, updated.name)
-            setProducts((prev) =>
-              prev.map((p) => (p.id === updated.id ? updated : p))
-            )
+          async (payload) => {
+            // Re-fetch the updated row with category JOIN so label is preserved
+            const id = (payload.new as Product).id
+            const { data } = await supabase
+              .from('products')
+              .select(`id, name, price, description, image, active, category_id, order_index, created_at, updated_at, categories(label, slug)`)
+              .eq('id', id)
+              .single()
+            if (data) {
+              const enriched = {
+                ...(data as any),
+                category: (data as any).categories?.label || 'Sin categoría',
+                category_slug: (data as any).categories?.slug || '',
+              } as Product
+              setProducts((prev) => prev.map((p) => (p.id === id ? enriched : p)))
+            }
           }
         )
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'products' },
-          (payload) => {
-            const inserted = payload.new as Product
-            console.log('[v0] Products: Realtime INSERT', inserted.id, inserted.name)
-            setProducts((prev) => {
-              const exists = prev.find((p) => p.id === inserted.id)
-              return exists ? prev : [...prev, inserted]
-            })
+          async (payload) => {
+            const id = (payload.new as Product).id
+            const { data } = await supabase
+              .from('products')
+              .select(`id, name, price, description, image, active, category_id, order_index, created_at, updated_at, categories(label, slug)`)
+              .eq('id', id)
+              .single()
+            if (data) {
+              const enriched = {
+                ...(data as any),
+                category: (data as any).categories?.label || 'Sin categoría',
+                category_slug: (data as any).categories?.slug || '',
+              } as Product
+              setProducts((prev) => {
+                const exists = prev.find((p) => p.id === id)
+                return exists ? prev : [...prev, enriched]
+              })
+            }
           }
         )
         .on(
           'postgres_changes',
           { event: 'DELETE', schema: 'public', table: 'products' },
           (payload) => {
-            const deleted = payload.old as Product
-            console.log('[v0] Products: Realtime DELETE', deleted.id)
-            setProducts((prev) => prev.filter((p) => p.id !== deleted.id))
+            const deletedId = (payload.old as { id: string }).id
+            setProducts((prev) => prev.filter((p) => p.id !== deletedId))
           }
         )
         .subscribe((s) => {
-          if (s === 'SUBSCRIBED') {
-            console.log('[v0] Products: Realtime connected')
-            setStatus('connected')
-          } else if (s === 'CLOSED' || s === 'CHANNEL_ERROR') {
-            console.log('[v0] Products: Realtime disconnected')
-            setStatus('disconnected')
-          }
+          if (s === 'SUBSCRIBED') setStatus('connected')
+          else if (s === 'CLOSED' || s === 'CHANNEL_ERROR') setStatus('disconnected')
         })
     }
 
@@ -143,7 +159,6 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
 
   // Optimistic local update
   const updateProductLocally = useCallback((id: string, updates: Partial<Product>) => {
-    console.log('[v0] Products: optimistic update', id, updates)
     setProducts((prev) =>
       prev.map((p) =>
         p.id === id
@@ -159,7 +174,6 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
 
   // Manual refresh from DB
   const refreshFromDB = useCallback(async () => {
-    console.log('[v0] Products: manual refresh from DB')
     const supabase = createClient()
     try {
       const { data, error } = await supabase
