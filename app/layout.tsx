@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { CartProvider } from '@/lib/cart-context'
 import { StoreProvider } from '@/lib/store'
+import { BannersProvider } from '@/components/banners-provider'
 import { Header } from '@/components/header'
 import { CartDrawer } from '@/components/cart-drawer'
 import { AddedToast } from '@/components/added-toast'
@@ -58,17 +59,19 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`}>
-        <StoreProvider>
-          <CartProvider>
-            <Header />
-            <CartDrawer />
-            <AddedToast />
-            <main className="min-h-screen pt-16">
-              {children}
-            </main>
-            <Footer />
-          </CartProvider>
-        </StoreProvider>
+        <BannersProvider>
+          <StoreProvider>
+            <CartProvider>
+              <Header />
+              <CartDrawer />
+              <AddedToast />
+              <main className="min-h-screen pt-16">
+                {children}
+              </main>
+              <Footer />
+            </CartProvider>
+          </StoreProvider>
+        </BannersProvider>
         <Analytics />
       </body>
     </html>

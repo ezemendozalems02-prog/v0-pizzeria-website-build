@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useBanners, type Banner } from '@/hooks/use-banners'
+import { useBannersContext, type Banner } from '@/components/banners-provider'
 import Image from 'next/image'
 import { Wifi, WifiOff, Loader2, CheckCircle2, ImageIcon } from 'lucide-react'
 
@@ -13,10 +13,10 @@ const PAGE_NAMES: Record<string, string> = {
   'pedido-delivery': 'Pedido Delivery',
 }
 
-const KEY_ORDER = ['home', 'sobre-nosotros', 'contacto', 'pedido-delivery']
+const KEY_ORDER = ['home', 'sobre-nosotros', 'contacto', 'pedido-delivery', 'hero', 'favorites', 'promos']
 
 export default function BannersAdminPage() {
-  const { banners, loading, status } = useBanners()
+  const { banners, loading, status, updateBannerLocally } = useBannersContext()
   const [editing, setEditing] = useState<{ id: string; image_url: string } | null>(null)
   const [saving, setSaving] = useState(false)
   const [savedId, setSavedId] = useState<string | null>(null)
@@ -39,19 +39,27 @@ export default function BannersAdminPage() {
   const handleSave = async () => {
     if (!editing) return
     setSaving(true)
+    const targetId = editing.id
+    const newUrl = editing.image_url.trim()
+    // 1. Optimistic local update — UI reflects change immediately
+    updateBannerLocally(targetId, newUrl)
+    setEditing(null)
+    setPreviewUrl('')
     try {
       const supabase = createClient()
       const { error } = await supabase
         .from('banners')
-        .update({ image_url: editing.image_url, updated_at: new Date().toISOString() })
-        .eq('id', editing.id)
+        .update({ image_url: newUrl, updated_at: new Date().toISOString() })
+        .eq('id', targetId)
       if (error) throw error
-      setSavedId(editing.id)
+      // 2. Bust Next.js cache so server-rendered pages see the new image
+      await fetch('/api/banners/revalidate', { method: 'POST' }).catch(() => {})
+      // 3. Show success indicator after DB confirms
+      setSavedId(targetId)
       setTimeout(() => setSavedId(null), 3000)
-      setEditing(null)
-      setPreviewUrl('')
     } catch (err) {
-      console.error('[v0] Error saving banner:', err)
+      console.error('[banners-admin] Error saving:', err)
+      // On error, Realtime will eventually correct the state from DB
     } finally {
       setSaving(false)
     }
