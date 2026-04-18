@@ -1,268 +1,159 @@
 "use client"
 
-import { useState, useRef } from "react"
-import Image from "next/image"
-import { Upload, CheckCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { useStore, type Banner } from "@/lib/store"
+'use client'
 
-const BANNER_META: Record<string, { name: string; description: string; hasSubtitle: boolean }> = {
-  hero: {
-    name: "Hero Principal",
-    description: "Banner grande en el inicio del sitio",
-    hasSubtitle: true,
-  },
-  favoritas: {
-    name: "Favoritas del barrio",
-    description: "Banner secundario en la sección de destacados",
-    hasSubtitle: false,
-  },
-  promos: {
-    name: "Promos Totore",
-    description: "Banner secundario en la sección de destacados",
-    hasSubtitle: false,
-  },
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
+
+interface Banner {
+  id: string
+  page: string
+  title: string
+  url: string
+  updated_at: string
 }
 
-export default function BannersPage() {
-  const { banners, updateBanner } = useStore()
-  const [savedId, setSavedId] = useState<string | null>(null)
+export default function BannersAdminPage() {
+  const [banners, setBanners] = useState<Banner[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState<Banner | null>(null)
+  const [saving, setSaving] = useState(false)
 
-  function handleSave(banner: Banner) {
-    updateBanner(banner)
-    setSavedId(banner.id)
-    setTimeout(() => setSavedId(null), 2500)
+  useEffect(() => {
+    const load = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('banners')
+        .select('*')
+        .order('page', { ascending: true })
+      setBanners((data as Banner[]) ?? [])
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  const handleSave = async () => {
+    if (!editing) return
+    setSaving(true)
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('banners')
+        .update({
+          url: editing.url,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', editing.id)
+
+      if (error) throw error
+
+      setBanners(banners.map(b => b.id === editing.id ? editing : b))
+      setEditing(null)
+    } catch (err) {
+      console.error('Error saving banner:', err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const pageNames: Record<string, string> = {
+    'home': 'Home - Principal',
+    'sobre-nosotros': 'Sobre Nosotros',
+    'contacto': 'Contacto',
+    'pedido-delivery': 'Pedido Delivery',
   }
 
   return (
-    <div className="flex flex-col gap-8 max-w-3xl">
+    <div className="max-w-7xl space-y-8">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-admin-text">Banners</h1>
-        <p className="text-sm text-admin-muted mt-0.5">
-          Editá los banners que aparecen en el home del sitio.
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#243329]/35 mb-2">
+          Panel interno
+        </p>
+        <h1 className="font-serif text-4xl font-bold text-[#243329] leading-tight">
+          Gestionar Banners
+        </h1>
+        <p className="text-sm text-[#243329]/60 mt-2">
+          Editá las URLs de los banners para cada sección del sitio
         </p>
       </div>
 
-      {banners.map((banner) => {
-        const meta = BANNER_META[banner.id]
-        return (
-          <BannerCard
-            key={banner.id}
-            banner={banner}
-            meta={meta}
-            saved={savedId === banner.id}
-            onSave={handleSave}
-          />
-        )
-      })}
-    </div>
-  )
-}
-
-function BannerCard({
-  banner,
-  meta,
-  saved,
-  onSave,
-}: {
-  banner: Banner
-  meta: { name: string; description: string; hasSubtitle: boolean }
-  saved: boolean
-  onSave: (b: Banner) => void
-}) {
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [form, setForm] = useState<Banner>(banner)
-  const [imageMode, setImageMode] = useState<"url" | "upload">("url")
-  const [previewError, setPreviewError] = useState(false)
-
-  function set<K extends keyof Banner>(key: K, value: Banner[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }))
-  }
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      set("image", ev.target?.result as string)
-      setPreviewError(false)
-    }
-    reader.readAsDataURL(file)
-  }
-
-  const hasPreview = form.image && !previewError
-
-  return (
-    <div className="bg-white border border-admin-border rounded-2xl overflow-hidden">
-      {/* Preview */}
-      <div className="relative w-full aspect-[16/7] bg-admin-bg">
-        {hasPreview ? (
-          <Image
-            src={form.image}
-            alt={meta.name}
-            fill
-            className="object-cover"
-            onError={() => setPreviewError(true)}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-admin-muted">
-            <Upload className="w-8 h-8 opacity-30" />
-          </div>
-        )}
-        {/* Overlay preview */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex items-end p-6 pointer-events-none">
-          <div>
-            {form.title && (
-              <p className="text-white font-serif text-2xl font-bold leading-tight text-balance">
-                {form.title}
-              </p>
-            )}
-            {form.subtitle && (
-              <p className="text-white/80 text-sm mt-1 max-w-xs">{form.subtitle}</p>
-            )}
-            {form.buttonText && (
-              <span className="inline-block mt-2 px-3 py-1 bg-white/20 text-white text-xs rounded-full">
-                {form.buttonText}
-              </span>
-            )}
-          </div>
+      {/* Banners Grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white border border-[#243329]/10 rounded-2xl p-6 animate-pulse">
+              <div className="h-40 bg-[#F5EFE8] rounded-xl mb-4" />
+              <div className="h-4 bg-[#F5EFE8] rounded mb-2" />
+              <div className="h-4 bg-[#F5EFE8] rounded w-1/2" />
+            </div>
+          ))}
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {banners.map((banner) => (
+            <div key={banner.id} className="bg-white border border-[#243329]/10 rounded-2xl overflow-hidden">
+              {/* Banner Preview */}
+              <div className="relative h-40 bg-[#F5EFE8] overflow-hidden">
+                {banner.url && (
+                  <Image
+                    src={banner.url}
+                    alt={banner.page}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                )}
+              </div>
 
-      {/* Form */}
-      <div className="p-6">
-        <div className="flex items-start justify-between mb-5">
-          <div>
-            <p className="font-semibold text-admin-text">{meta.name}</p>
-            <p className="text-xs text-admin-muted mt-0.5">{meta.description}</p>
-          </div>
-          {saved && (
-            <div className="flex items-center gap-1.5 text-green-600 text-xs font-medium">
-              <CheckCircle className="w-4 h-4" />
-              Guardado
+              {/* Banner Info */}
+              <div className="p-6">
+                <h3 className="font-serif text-xl font-bold text-[#243329] mb-1">
+                  {pageNames[banner.page] || banner.page}
+                </h3>
+                <p className="text-xs text-[#243329]/50 mb-4">
+                  {banner.title}
+                </p>
+
+                {editing?.id === banner.id ? (
+                  <div className="space-y-3">
+                    <textarea
+                      value={editing.url}
+                      onChange={(e) => setEditing({ ...editing, url: e.target.value })}
+                      placeholder="URL del banner"
+                      className="w-full h-20 px-3 py-2 text-xs border border-[#243329]/15 rounded-xl bg-[#F5EFE8]/60 text-[#243329] placeholder:text-[#243329]/30 focus:outline-none focus:ring-1 focus:ring-[#C4322B]/30 transition-all"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex-1 px-3 py-2 bg-[#C4322B] text-white text-xs font-medium rounded-lg hover:bg-[#C4322B]/90 disabled:opacity-50 transition-colors"
+                      >
+                        {saving ? 'Guardando...' : 'Guardar'}
+                      </button>
+                      <button
+                        onClick={() => setEditing(null)}
+                        className="flex-1 px-3 py-2 bg-[#F5EFE8] text-[#243329] text-xs font-medium rounded-lg hover:bg-[#F5EFE8]/70 transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setEditing(banner)}
+                    className="w-full px-3 py-2 bg-[#F5EFE8] text-[#243329] text-xs font-medium rounded-lg hover:bg-[#F5EFE8]/70 transition-colors"
+                  >
+                    Editar URL
+                  </button>
+                )}
+              </div>
             </div>
-          )}
+          ))}
         </div>
-
-        <div className="flex flex-col gap-4">
-          {/* Image */}
-          <div className="flex flex-col gap-2">
-            <Label className="text-admin-text font-medium text-sm">Imagen</Label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setImageMode("url")}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                  imageMode === "url"
-                    ? "bg-primary text-white border-primary"
-                    : "border-admin-border text-admin-muted hover:text-admin-text"
-                }`}
-              >
-                URL
-              </button>
-              <button
-                type="button"
-                onClick={() => setImageMode("upload")}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                  imageMode === "upload"
-                    ? "bg-primary text-white border-primary"
-                    : "border-admin-border text-admin-muted hover:text-admin-text"
-                }`}
-              >
-                Subir archivo
-              </button>
-            </div>
-            {imageMode === "url" ? (
-              <Input
-                type="url"
-                placeholder="https://ejemplo.com/imagen.jpg"
-                value={form.image.startsWith("data:") ? "" : form.image}
-                onChange={(e) => {
-                  set("image", e.target.value)
-                  setPreviewError(false)
-                }}
-                className="bg-admin-bg border-admin-border text-admin-text"
-              />
-            ) : (
-              <>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="border-admin-border text-admin-muted hover:text-admin-text w-fit"
-                  onClick={() => fileRef.current?.click()}
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Elegir imagen
-                </Button>
-              </>
-            )}
-          </div>
-
-          {/* Title */}
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-admin-text font-medium text-sm">Título</Label>
-            <Input
-              value={form.title}
-              onChange={(e) => set("title", e.target.value)}
-              placeholder="Título del banner"
-              className="bg-admin-bg border-admin-border text-admin-text"
-            />
-          </div>
-
-          {/* Subtitle (only for hero) */}
-          {meta.hasSubtitle && (
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-admin-text font-medium text-sm">Subtítulo</Label>
-              <Textarea
-                value={form.subtitle}
-                onChange={(e) => set("subtitle", e.target.value)}
-                placeholder="Descripción breve bajo el título"
-                rows={2}
-                className="bg-admin-bg border-admin-border text-admin-text resize-none"
-              />
-            </div>
-          )}
-
-          {/* Button text + link */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-admin-text font-medium text-sm">Texto del botón</Label>
-              <Input
-                value={form.buttonText}
-                onChange={(e) => set("buttonText", e.target.value)}
-                placeholder="Ver Menú"
-                className="bg-admin-bg border-admin-border text-admin-text"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-admin-text font-medium text-sm">Link del botón</Label>
-              <Input
-                value={form.buttonLink}
-                onChange={(e) => set("buttonLink", e.target.value)}
-                placeholder="/pedido-delivery"
-                className="bg-admin-bg border-admin-border text-admin-text"
-              />
-            </div>
-          </div>
-
-          <Button
-            onClick={() => onSave(form)}
-            className="bg-primary hover:bg-primary/90 text-white w-fit"
-          >
-            Guardar cambios
-          </Button>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
