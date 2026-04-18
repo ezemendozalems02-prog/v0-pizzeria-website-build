@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { ImageUpload } from '@/components/admin/image-upload'
 import {
   Dialog,
   DialogContent,
@@ -480,28 +481,16 @@ export default function ProductsPage() {
               />
             </div>
 
-            {/* Image URL */}
+            {/* Image Upload */}
             <div>
-              <label className='block text-sm font-medium text-admin-text mb-1'>
-                URL de la Imagen *
+              <label className='block text-sm font-medium text-admin-text mb-2'>
+                Imagen del Producto *
               </label>
-              <Input
+              <ImageUpload
                 value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                placeholder='https://ejemplo.com/imagen.jpg'
-                className='bg-white border-admin-border text-admin-text'
+                onChange={(url) => setFormData({ ...formData, image: url })}
+                onError={(error) => setErrorMessage(error)}
               />
-              {formData.image && (
-                <div className='mt-2 relative w-full h-32 rounded-lg overflow-hidden bg-admin-bg border border-admin-border'>
-                  <Image
-                    src={formData.image}
-                    alt='Preview'
-                    fill
-                    className='object-cover'
-                    unoptimized
-                  />
-                </div>
-              )}
             </div>
 
             {/* Active Toggle */}
