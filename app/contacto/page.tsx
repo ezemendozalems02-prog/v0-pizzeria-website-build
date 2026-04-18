@@ -14,8 +14,8 @@ export default function ContactPage() {
       <section className="relative h-[40vh] min-h-[300px] flex items-center">
         <div className="absolute inset-0">
           <Image
-            src="/images/contact-hero.jpg"
-            alt="Contacto Totore"
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20contacto%20-mOHjngdnmrB7nJQdJtJvtjPuSjFijx.jpg"
+            alt="Contacto - TOTORE"
             fill
             className="object-cover"
             priority

@@ -13,8 +13,8 @@ export default function DeliveryPage() {
       <section className="relative h-[40vh] min-h-[320px] flex items-center">
         <div className="absolute inset-0">
           <Image
-            src="/images/delivery-hero.jpg"
-            alt="Pizzas Totore"
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20delivery%20%283%29-YIekcMePw6CwWhgh1SfnNmJ4vYKMdk.jpg"
+            alt="Delivery - TOTORE"
             fill
             className="object-cover"
             priority

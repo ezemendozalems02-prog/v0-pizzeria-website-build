@@ -15,8 +15,8 @@ export default function AboutPage() {
       <section className="relative h-[40vh] min-h-[300px] flex items-center">
         <div className="absolute inset-0">
           <Image
-            src="/images/about-hero.jpg"
-            alt="Interior de Totore"
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20nosotros%20%281%29-S5TVL5cAsT2OhrRLD5w5p32uM45UTX.jpg"
+            alt="Nosotros - TOTORE"
             fill
             className="object-cover"
             priority

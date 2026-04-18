@@ -10,8 +10,8 @@ export default function HomePage() {
       <section className="relative min-h-[90vh] flex items-center">
         <div className="absolute inset-0">
           <Image
-            src="/images/hero-pizza.jpg"
-            alt="Pizza napolitana artesanal"
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20principal%20inicio-sgLjm1UietPhuULpK6QoJWyqFRFgFj.jpg"
+            alt="Pizza napolitana artesanal - TOTORE fresco, auténtica"
             fill
             className="object-cover"
             priority
