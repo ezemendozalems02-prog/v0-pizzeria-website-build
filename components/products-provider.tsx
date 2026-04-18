@@ -36,7 +36,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState<ConnectionStatus>('connecting')
 
-  // 1. Initial fetch from Supabase
+  // 1. Initial fetch from Supabase with category JOIN
   useEffect(() => {
     const loadProducts = async () => {
       console.log('[v0] Products: loading initial data from Supabase')
@@ -44,12 +44,31 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       try {
         const { data, error } = await supabase
           .from('products')
-          .select('*')
+          .select(`
+            id,
+            name,
+            price,
+            description,
+            image,
+            active,
+            category_id,
+            order_index,
+            created_at,
+            updated_at,
+            categories!inner(name)
+          `)
           .order('order_index', { ascending: true })
         
         if (error) throw error
-        console.log('[v0] Products: loaded', data?.length, 'items')
-        setProducts((data as Product[]) ?? [])
+        
+        // Transform data to include category name
+        const transformed = (data as any[])?.map((item: any) => ({
+          ...item,
+          category: item.categories?.name || 'Sin categoría',
+        })) ?? []
+        
+        console.log('[v0] Products: loaded', transformed.length, 'items')
+        setProducts(transformed as Product[])
       } catch (err) {
         console.error('[v0] Products: load error', err)
         setStatus('disconnected')
@@ -144,11 +163,29 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          id,
+          name,
+          price,
+          description,
+          image,
+          active,
+          category_id,
+          order_index,
+          created_at,
+          updated_at,
+          categories!inner(name)
+        `)
         .order('order_index', { ascending: true })
       
       if (error) throw error
-      setProducts((data as Product[]) ?? [])
+      
+      const transformed = (data as any[])?.map((item: any) => ({
+        ...item,
+        category: item.categories?.name || 'Sin categoría',
+      })) ?? []
+      
+      setProducts(transformed as Product[])
     } catch (err) {
       console.error('[v0] Products: refresh error', err)
     }
