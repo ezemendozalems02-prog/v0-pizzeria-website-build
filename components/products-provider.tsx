@@ -158,17 +158,39 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
 
   // Optimistic local update
   const updateProductLocally = useCallback((id: string, updates: Partial<Product>) => {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              ...updates,
-              updated_at: new Date().toISOString(),
-            }
-          : p
-      )
-    )
+    setProducts((prev) => {
+      const exists = prev.some(p => p.id === id)
+      if (exists) {
+        // Actualizar producto existente
+        return prev.map((p) =>
+          p.id === id
+            ? {
+                ...p,
+                ...updates,
+                updated_at: new Date().toISOString(),
+              }
+            : p
+        )
+      } else {
+        // Agregar nuevo producto (al final)
+        const newProduct = {
+          id,
+          name: '',
+          price: 0,
+          description: '',
+          image: '',
+          active: true,
+          category_id: '1',
+          category: 'Pizzas',
+          category_slug: 'pizzas',
+          order_index: prev.length,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          ...updates,
+        } as Product
+        return [...prev, newProduct]
+      }
+    })
   }, [])
 
   // Manual refresh from DB

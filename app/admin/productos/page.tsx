@@ -6,7 +6,7 @@ import { useProductsContext, type Product } from '@/components/products-provider
 import Image from 'next/image'
 import {
   Wifi, WifiOff, Loader2, CheckCircle2, Pencil, Trash2,
-  Eye, EyeOff,
+  Eye, EyeOff, Plus,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,10 +32,35 @@ export default function ProductsAdminPage() {
   const [savedId, setSavedId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+
+  // Nuevo producto en blanco
+  const newProduct = (): Product => ({
+    id: crypto.randomUUID(),
+    name: '',
+    price: 0,
+    description: '',
+    image: '',
+    active: true,
+    category_id: '1', // default
+    category: 'Pizzas',
+    category_slug: 'pizzas',
+    order_index: (products?.length ?? 0) + 1,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  })
 
   const openEdit = (product: Product) => {
     setEditProduct(product)
     setEditForm({ ...product })
+    setIsCreating(false)
+  }
+
+  const openCreate = () => {
+    const blank = newProduct()
+    setEditProduct(blank)
+    setEditForm(blank)
+    setIsCreating(true)
   }
 
   const closeEdit = () => {
@@ -45,6 +70,18 @@ export default function ProductsAdminPage() {
 
   const handleSave = async () => {
     if (!editForm) return
+    
+    // Validaciones
+    if (!editForm.name?.trim()) {
+      alert('El nombre del producto es requerido')
+      return
+    }
+    
+    if (Number(editForm.price) < 0) {
+      alert('El precio no puede ser negativo')
+      return
+    }
+
     setSaving(true)
     const targetId = editForm.id
 
@@ -60,20 +97,43 @@ export default function ProductsAdminPage() {
 
     try {
       const supabase = createClient()
-      const { error } = await supabase
-        .from('products')
-        .update({
-          name: editForm.name,
-          price: Number(editForm.price),
-          description: editForm.description,
-          image: editForm.image,
-          active: editForm.active,
-          order_index: Number(editForm.order_index),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', targetId)
 
-      if (error) throw error
+      if (isCreating) {
+        // Insertar nuevo producto
+        const { error } = await supabase
+          .from('products')
+          .insert({
+            id: targetId,
+            name: editForm.name,
+            price: Number(editForm.price),
+            description: editForm.description,
+            image: editForm.image,
+            active: editForm.active,
+            category_id: editForm.category_id,
+            order_index: Number(editForm.order_index),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+
+        if (error) throw error
+      } else {
+        // Actualizar producto existente
+        const { error } = await supabase
+          .from('products')
+          .update({
+            name: editForm.name,
+            price: Number(editForm.price),
+            description: editForm.description,
+            image: editForm.image,
+            active: editForm.active,
+            order_index: Number(editForm.order_index),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', targetId)
+
+        if (error) throw error
+      }
+
       await fetch('/api/banners/revalidate', { method: 'POST' }).catch(() => {})
       setSavedId(targetId)
       setTimeout(() => setSavedId(null), 3000)
@@ -82,6 +142,7 @@ export default function ProductsAdminPage() {
       await refreshFromDB()
     } finally {
       setSaving(false)
+      setIsCreating(false)
     }
   }
 
@@ -122,14 +183,23 @@ export default function ProductsAdminPage() {
           </p>
         </div>
 
-        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${
-          status === 'connected' ? 'bg-green-50 text-green-700 border-green-200'
-          : status === 'connecting' ? 'bg-amber-50 text-amber-700 border-amber-200'
-          : 'bg-red-50 text-red-700 border-red-200'
-        }`}>
-          {status === 'connected' ? <><Wifi className="w-3.5 h-3.5" /> En vivo</>
-          : status === 'connecting' ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Conectando</>
-          : <><WifiOff className="w-3.5 h-3.5" /> Sin conexión</>}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#C4322B] text-white text-sm font-semibold rounded-lg hover:bg-[#C4322B]/90 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo Producto
+          </button>
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border ${
+            status === 'connected' ? 'bg-green-50 text-green-700 border-green-200'
+            : status === 'connecting' ? 'bg-amber-50 text-amber-700 border-amber-200'
+            : 'bg-red-50 text-red-700 border-red-200'
+          }`}>
+            {status === 'connected' ? <><Wifi className="w-3.5 h-3.5" /> En vivo</>
+            : status === 'connecting' ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Conectando</>
+            : <><WifiOff className="w-3.5 h-3.5" /> Sin conexión</>}
+          </div>
         </div>
       </div>
 
@@ -245,7 +315,7 @@ export default function ProductsAdminPage() {
         <DialogContent className="max-w-md bg-white p-0 gap-0 overflow-hidden rounded-2xl">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-[#243329]/10">
             <DialogTitle className="font-serif text-xl font-bold text-[#243329]">
-              Editar producto
+              {isCreating ? 'Nuevo Producto' : 'Editar Producto'}
             </DialogTitle>
           </DialogHeader>
 
@@ -362,13 +432,13 @@ export default function ProductsAdminPage() {
                 </Button>
                 <Button
                   onClick={handleSave}
-                  disabled={saving}
+                  disabled={saving || !editForm.name.trim()}
                   className="flex-1 bg-[#C4322B] hover:bg-[#C4322B]/90 text-white font-semibold"
                 >
                   {saving ? (
-                    <><Loader2 className="w-4 h-4 animate-spin mr-1.5" /> Guardando...</>
+                    <><Loader2 className="w-4 h-4 animate-spin mr-1.5" /> {isCreating ? 'Creando' : 'Guardando'}...</>
                   ) : (
-                    'Guardar'
+                    isCreating ? 'Crear Producto' : 'Guardar'
                   )}
                 </Button>
               </div>
