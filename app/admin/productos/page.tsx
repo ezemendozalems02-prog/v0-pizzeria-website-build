@@ -78,9 +78,12 @@ export default function ProductsAdminPage() {
       await fetch('/api/banners/revalidate', { method: 'POST' }).catch(() => {})
       setSavedId(targetId)
       setTimeout(() => setSavedId(null), 3000)
-      await refreshFromDB()
+      // No llamar refreshFromDB() aquí — pisaría el update optimista
+      // El Realtime se encarga de sincronizar desde DB
     } catch (err) {
       console.error('[productos-admin] Save error:', err)
+      // Si falló, sincronizar desde DB para corregir el estado optimista
+      await refreshFromDB()
     } finally {
       setSaving(false)
     }
