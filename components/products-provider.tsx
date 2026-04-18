@@ -98,12 +98,14 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
           async (payload) => {
             // Re-fetch the updated row with category JOIN so label is preserved
             const id = (payload.new as Product).id
+            console.log('[ProductsProvider] Realtime UPDATE event received for:', id)
             const { data } = await supabase
               .from('products')
               .select(`id, name, price, description, image, active, category_id, order_index, created_at, updated_at, categories(label, slug)`)
               .eq('id', id)
               .single()
             if (data) {
+              console.log('[ProductsProvider] Realtime data fetched:', { id, image: (data as any).image })
               const enriched = {
                 ...(data as any),
                 category: (data as any).categories?.label || 'Sin categoría',

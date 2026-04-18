@@ -48,6 +48,12 @@ export default function ProductsAdminPage() {
     setSaving(true)
     const targetId = editForm.id
 
+    console.log('[productos-admin] Saving product:', {
+      id: targetId,
+      name: editForm.name,
+      image: editForm.image,
+    })
+
     // Optimistic update
     updateProductLocally(targetId, {
       name: editForm.name,
@@ -57,6 +63,7 @@ export default function ProductsAdminPage() {
       active: editForm.active,
       order_index: Number(editForm.order_index),
     })
+    console.log('[productos-admin] Optimistic update applied')
     closeEdit()
 
     try {
@@ -75,6 +82,7 @@ export default function ProductsAdminPage() {
         .eq('id', targetId)
 
       if (error) throw error
+      console.log('[productos-admin] DB update successful')
       await fetch('/api/banners/revalidate', { method: 'POST' }).catch(() => {})
       setSavedId(targetId)
       setTimeout(() => setSavedId(null), 3000)

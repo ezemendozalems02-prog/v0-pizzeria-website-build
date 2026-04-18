@@ -27,15 +27,18 @@ export async function POST(request: NextRequest) {
     // Nombre de archivo único y limpio
     const ext = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
     const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`
+    const filepath = `products/${filename}`
+
+    console.log('[upload] Starting upload:', { filename, size: file.size, type: file.type })
 
     // Convertir a Uint8Array
     const arrayBuffer = await file.arrayBuffer()
     const fileBuffer = new Uint8Array(arrayBuffer)
 
     // Subir a Supabase Storage bucket 'media'
-    const { error: uploadError } = await supabaseAdmin.storage
+    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from('media')
-      .upload(filename, fileBuffer, {
+      .upload(filepath, fileBuffer, {
         contentType: file.type,
         upsert: false,
         cacheControl: '31536000',
@@ -43,17 +46,23 @@ export async function POST(request: NextRequest) {
 
     if (uploadError) {
       console.error('[upload] Storage error:', uploadError.message)
-      return NextResponse.json({ error: uploadError.message }, { status: 500 })
+      return NextResponse.json({ error: `Storage error: ${uploadError.message}` }, { status: 500 })
     }
+
+    console.log('[upload] Upload successful:', uploadData)
 
     // URL pública
     const { data: urlData } = supabaseAdmin.storage
       .from('media')
-      .getPublicUrl(filename)
+      .getPublicUrl(filepath)
 
-    return NextResponse.json({ url: urlData.publicUrl })
+    const publicUrl = urlData.publicUrl
+
+    console.log('[upload] Public URL generated:', publicUrl)
+
+    return NextResponse.json({ url: publicUrl, filepath })
   } catch (error: any) {
     console.error('[upload] Unexpected error:', error?.message ?? error)
-    return NextResponse.json({ error: 'Error inesperado al subir el archivo' }, { status: 500 })
+    return NextResponse.json({ error: `Unexpected error: ${error?.message ?? 'Unknown'}` }, { status: 500 })
   }
 }
