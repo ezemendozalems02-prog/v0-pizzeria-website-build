@@ -44,8 +44,12 @@ export default function ProductsAdminPage() {
     setEditForm(null)
   }
 
-  // Upload image to Vercel Blob
+  // Upload image to Supabase Storage
   const handleFileUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      console.error('[productos-admin] File is not an image')
+      return
+    }
     setUploading(true)
     try {
       const formData = new FormData()
@@ -54,11 +58,14 @@ export default function ProductsAdminPage() {
       const data = await res.json()
       if (data.url) {
         setEditForm((prev: any) => ({ ...prev, image: data.url }))
+      } else if (data.error) {
+        console.error('[productos-admin] Upload error:', data.error)
       }
     } catch (err) {
       console.error('[productos-admin] Upload error:', err)
     } finally {
       setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -271,55 +278,82 @@ export default function ProductsAdminPage() {
 
           {editForm && (
             <div className="px-6 py-5 space-y-4 max-h-[80vh] overflow-y-auto">
-              {/* Image preview + upload */}
-              <div>
-                {/* Preview */}
-                {editForm.image && (
-                  <div className="relative w-full h-48 rounded-xl overflow-hidden bg-[#F5EFE8] mb-3">
-                    <Image
-                      key={editForm.image}
-                      src={editForm.image}
-                      alt="Preview"
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
-                  </div>
+              {/* Image upload zone — prominent drag & drop */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  e.currentTarget.classList.add('bg-[#C4322B]/10', 'border-[#C4322B]')
+                }}
+                onDragLeave={(e) => {
+                  e.currentTarget.classList.remove('bg-[#C4322B]/10', 'border-[#C4322B]')
+                }}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  e.currentTarget.classList.remove('bg-[#C4322B]/10', 'border-[#C4322B]')
+                  const file = e.dataTransfer.files?.[0]
+                  if (file?.type.startsWith('image/')) handleFileUpload(file)
+                }}
+                className="relative border-2 border-dashed border-[#243329]/20 rounded-2xl p-6 bg-[#F5EFE8]/40 hover:bg-[#F5EFE8] cursor-pointer transition-all flex flex-col items-center justify-center min-h-[140px] gap-2"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="w-8 h-8 text-[#C4322B] animate-spin" />
+                    <p className="text-xs font-semibold text-[#243329]">Subiendo...</p>
+                  </>
+                ) : (
+                  <>
+                    <CloudUpload className="w-10 h-10 text-[#C4322B]" />
+                    <div className="text-center">
+                      <p className="text-xs font-semibold text-[#243329]">
+                        Arrastrá la imagen o hacé click
+                      </p>
+                      <p className="text-[10px] text-[#243329]/50 mt-0.5">
+                        PNG, JPG, GIF
+                      </p>
+                    </div>
+                  </>
                 )}
-
-                {/* URL input + upload button */}
-                <div className="flex gap-2">
-                  <Input
-                    value={editForm.image || ''}
-                    onChange={(e) => setEditForm({ ...editForm, image: e.target.value })}
-                    placeholder="/images/producto.jpg"
-                    className="flex-1 font-mono text-xs bg-[#F5EFE8]/60 border-[#243329]/15 focus:border-[#C4322B]/40"
-                  />
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleFileUpload(file)
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                    title="Subir imagen"
-                    className="w-10 h-10 flex-shrink-0 rounded-lg bg-[#F5EFE8] border border-[#243329]/15 flex items-center justify-center text-[#243329]/60 hover:bg-[#243329]/10 disabled:opacity-50 transition-colors"
-                  >
-                    {uploading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <CloudUpload className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
               </div>
+
+              {/* Preview */}
+              {editForm.image && (
+                <div className="relative w-full h-40 rounded-xl overflow-hidden bg-[#F5EFE8] border border-[#243329]/10">
+                  <Image
+                    key={editForm.image}
+                    src={editForm.image}
+                    alt="Preview"
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
+              )}
+
+              {/* URL input */}
+              <div>
+                <label className="block text-xs font-semibold text-[#243329]/60 mb-1.5">
+                  O pegá la URL directamente
+                </label>
+                <Input
+                  value={editForm.image || ''}
+                  onChange={(e) => setEditForm({ ...editForm, image: e.target.value })}
+                  placeholder="https://ejemplo.com/imagen.jpg"
+                  className="font-mono text-xs bg-white border-[#243329]/15 focus:border-[#C4322B]/40"
+                />
+              </div>
+
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleFileUpload(file)
+                }}
+              />
 
               {/* Name */}
               <div>
