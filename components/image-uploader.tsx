@@ -43,13 +43,10 @@ export function ImageUploader({ value, onChange, label, height = 160 }: ImageUpl
 
       if (!res.ok || data.error) {
         setError(data.error || 'Error al subir la imagen')
-        console.error('[ImageUploader] Upload error:', data.error)
         return
       }
 
-      console.log('[ImageUploader] Upload successful:', data.url)
       onChange(data.url)
-      console.log('[ImageUploader] onChange called with URL:', data.url)
     } catch (err) {
       setError('No se pudo conectar con el servidor')
     } finally {
