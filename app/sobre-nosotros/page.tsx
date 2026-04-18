@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function AboutPage() {
   return (
-    <section className="relative h-[40vh] min-h-[300px] flex items-center">
+    <section className="relative h-[40vh] min-h-[300px]">
       <div className="absolute inset-0">
         <Image
           src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20nosotros%20%281%29-S5TVL5cAsT2OhrRLD5w5p32uM45UTX.jpg"
@@ -16,7 +16,6 @@ export default function AboutPage() {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-secondary/90 via-secondary/70 to-secondary/50" />
       </div>
     </section>
   )

@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function ContactPage() {
   return (
-    <section className="relative h-[40vh] min-h-[300px] flex items-center">
+    <section className="relative h-[40vh] min-h-[300px]">
       <div className="absolute inset-0">
         <Image
           src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20contacto%20-mOHjngdnmrB7nJQdJtJvtjPuSjFijx.jpg"
@@ -16,7 +16,6 @@ export default function ContactPage() {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-secondary/90 via-secondary/70 to-secondary/50" />
       </div>
     </section>
   )
