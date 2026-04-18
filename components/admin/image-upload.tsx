@@ -2,8 +2,7 @@
 
 import { useState, useRef } from 'react'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/client'
-import { Upload, X, Loader2, AlertCircle } from 'lucide-react'
+import { Upload, X, Loader2 } from 'lucide-react'
 
 interface ImageUploadProps {
   value: string
@@ -15,117 +14,76 @@ export function ImageUpload({ value, onChange, onError }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
 
-  const handleFileSelect = async (file: File) => {
+  const handleUpload = async (file: File) => {
     try {
       setError(null)
 
-      // Validar que sea imagen
       if (!file.type.startsWith('image/')) {
-        const msg = 'Solo se permiten archivos de imagen'
-        setError(msg)
-        onError?.(msg)
-        return
+        throw new Error('Solo se permiten imágenes (PNG, JPG, GIF, WEBP)')
       }
 
-      // Validar tamaño (máximo 10MB)
       if (file.size > 10 * 1024 * 1024) {
-        const msg = 'El archivo no puede superar 10MB'
-        setError(msg)
-        onError?.(msg)
-        return
+        throw new Error('El archivo no puede superar 10MB')
       }
 
       setUploading(true)
 
-      // Generar nombre único
-      const timestamp = Date.now()
-      const random = Math.random().toString(36).substring(2, 9)
-      const ext = file.name.split('.').pop() || 'jpg'
-      const filename = `products/${timestamp}-${random}.${ext}`
+      const formData = new FormData()
+      formData.append('file', file)
 
-      // Convertir a ArrayBuffer
-      const arrayBuffer = await file.arrayBuffer()
-      const fileBuffer = new Uint8Array(arrayBuffer)
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
 
-      // Subir a Supabase Storage
-      const { data, error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(filename, fileBuffer, {
-          contentType: file.type,
-          upsert: false,
-          cacheControl: '3600',
-        })
+      const data = await response.json()
 
-      if (uploadError) {
-        throw uploadError
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al subir la imagen')
       }
 
-      // Obtener URL pública
-      const { data: publicUrlData } = supabase.storage
-        .from('media')
-        .getPublicUrl(filename)
-
-      const publicUrl = publicUrlData.publicUrl
-      onChange(publicUrl)
+      onChange(data.url)
       setError(null)
     } catch (err: any) {
-      const msg = err?.message || 'Error al subir la imagen'
+      const msg = err.message || 'Error desconocido'
       setError(msg)
       onError?.(msg)
-      console.error('[ImageUpload] Error:', err)
     } finally {
       setUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
+    const file = e.dataTransfer.files?.[0]
+    if (file) handleUpload(file)
   }
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
-
-    const files = e.dataTransfer.files
-    if (files.length > 0) {
-      handleFileSelect(files[0])
-    }
   }
 
   return (
-    <div className='space-y-3'>
+    <div className='space-y-2'>
       {/* Upload Zone */}
       <div
-        onClick={() => fileInputRef.current?.click()}
-        onDragOver={handleDragOver}
         onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onClick={() => fileInputRef.current?.click()}
         className={`relative border-2 border-dashed rounded-lg p-6 cursor-pointer transition-colors ${
           uploading
-            ? 'border-blue-300 bg-blue-50'
-            : 'border-admin-border hover:border-primary bg-admin-bg hover:bg-primary/5'
+            ? 'bg-gray-50 border-gray-300'
+            : 'border-admin-border bg-white hover:bg-admin-bg hover:border-blue-500'
         }`}
       >
-        <input
-          ref={fileInputRef}
-          type='file'
-          accept='image/*'
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (file) handleFileSelect(file)
-          }}
-          className='hidden'
-        />
-
         <div className='flex flex-col items-center justify-center gap-2'>
           {uploading ? (
             <>
-              <Loader2 className='w-8 h-8 text-primary animate-spin' />
+              <Loader2 className='w-8 h-8 animate-spin text-primary' />
               <p className='text-sm font-medium text-admin-text'>Subiendo imagen...</p>
             </>
           ) : (
@@ -133,49 +91,64 @@ export function ImageUpload({ value, onChange, onError }: ImageUploadProps) {
               <Upload className='w-8 h-8 text-admin-muted' />
               <div className='text-center'>
                 <p className='text-sm font-medium text-admin-text'>
-                  Arrastra la imagen aquí o haz click
+                  Arrastra una imagen o haz click aquí
                 </p>
-                <p className='text-xs text-admin-muted mt-1'>
-                  PNG, JPG, GIF, WEBP (máx 10MB)
-                </p>
+                <p className='text-xs text-admin-muted mt-0.5'>PNG, JPG, GIF (máx 10MB)</p>
               </div>
             </>
           )}
         </div>
+
+        <input
+          ref={fileInputRef}
+          type='file'
+          accept='image/*'
+          className='hidden'
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) handleUpload(file)
+          }}
+          disabled={uploading}
+        />
       </div>
 
-      {/* Error Message */}
+      {/* Error */}
       {error && (
-        <div className='flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg'>
-          <AlertCircle className='w-4 h-4 text-red-600 flex-shrink-0' />
-          <p className='text-xs text-red-600'>{error}</p>
+        <div className='p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-center gap-2'>
+          <AlertCircle className='w-4 h-4 flex-shrink-0' />
+          {error}
         </div>
       )}
 
       {/* Preview */}
       {value && (
-        <div className='space-y-2'>
-          <label className='block text-xs font-medium text-admin-muted uppercase tracking-wide'>
-            Vista previa
-          </label>
+        <div className='relative group'>
           <div className='relative w-full h-40 rounded-lg overflow-hidden bg-admin-bg border border-admin-border'>
-            <Image
-              src={value}
-              alt='Preview'
-              fill
-              className='object-cover'
-              unoptimized
-            />
-            <button
-              onClick={() => onChange('')}
-              className='absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded text-white transition-colors'
-              title='Eliminar imagen'
-            >
-              <X className='w-4 h-4' />
-            </button>
+            <Image src={value} alt='Preview' fill className='object-cover' unoptimized />
           </div>
+          <button
+            onClick={() => onChange('')}
+            className='absolute top-2 right-2 p-1 bg-white rounded-lg border border-admin-border opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50'
+            title='Eliminar imagen'
+          >
+            <X className='w-4 h-4 text-red-500' />
+          </button>
         </div>
       )}
     </div>
+  )
+}
+
+function AlertCircle({ className }: { className: string }) {
+  return (
+    <svg
+      className={className}
+      fill='none'
+      stroke='currentColor'
+      viewBox='0 0 24 24'
+    >
+      <circle cx='12' cy='12' r='10' />
+      <path d='M12 8v4M12 16h.01' />
+    </svg>
   )
 }
