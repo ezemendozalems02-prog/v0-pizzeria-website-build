@@ -12,18 +12,18 @@ export default function HomePage() {
         bannerKey="home"
         fallbackUrl="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20principal%20inicio-sgLjm1UietPhuULpK6QoJWyqFRFgFj.jpg"
         alt="Pizza napolitana artesanal - TOTORE fresco, auténtica"
-        className="relative min-h-[90vh] flex items-center"
+        className="relative h-[60vh] sm:h-[90vh] min-h-[320px] flex items-center"
         priority
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 flex items-end min-h-[90vh]">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-20 flex items-end h-full">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+            <Button asChild size="sm" className="sm:size-lg bg-primary hover:bg-primary/90 text-primary-foreground">
               <Link href="/pedido-delivery">
                 Pedir Delivery
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+            <Button asChild variant="outline" size="sm" className="sm:size-lg border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
               <Link href="/pedido-delivery">
                 Ver Menú
               </Link>
@@ -176,7 +176,7 @@ function FeaturedBanner({
   href: string
 }) {
   return (
-    <Link href={href} className="group relative aspect-[16/9] rounded-xl overflow-hidden block">
+    <Link href={href} className="group relative aspect-[4/3] sm:aspect-[16/9] rounded-xl overflow-hidden block">
       <Image
         src={image}
         alt={title}
@@ -184,13 +184,13 @@ function FeaturedBanner({
         className="object-cover transition-transform duration-500 group-hover:scale-105"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-6">
-        <h3 className="font-serif text-2xl font-bold text-primary-foreground mb-3">
+      <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+        <h3 className="font-serif text-lg sm:text-2xl font-bold text-primary-foreground mb-2 sm:mb-3">
           {title}
         </h3>
-        <span className="inline-flex items-center text-sm font-medium text-primary-foreground/90 group-hover:text-primary-foreground transition-colors">
+        <span className="inline-flex items-center text-xs sm:text-sm font-medium text-primary-foreground/90 group-hover:text-primary-foreground transition-colors">
           Ver Menú
-          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
         </span>
       </div>
     </Link>
