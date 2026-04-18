@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useBannersContext, type Banner } from '@/components/banners-provider'
 import Image from 'next/image'
-import { Wifi, WifiOff, Loader2, CheckCircle2, ImageIcon, CloudUpload } from 'lucide-react'
+import { Wifi, WifiOff, Loader2, CheckCircle2, ImageIcon } from 'lucide-react'
+import { ImageUploader } from '@/components/image-uploader'
 
 const PAGE_NAMES: Record<string, string> = {
   'home': 'Home — Principal',
@@ -19,30 +20,7 @@ export default function BannersAdminPage() {
   const { banners, loading, status, updateBannerLocally } = useBannersContext()
   const [editing, setEditing] = useState<{ id: string; image_url: string } | null>(null)
   const [saving, setSaving] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const [savedId, setSavedId] = useState<string | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string>('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleFileUpload = async (file: File) => {
-    setUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const res = await fetch('/api/upload', { method: 'POST', body: formData })
-      const data = await res.json()
-      if (data.url) {
-        setEditing((e) => e ? { ...e, image_url: data.url } : e)
-        setPreviewUrl(data.url)
-      }
-    } catch (err) {
-      console.error('[banners-admin] Upload error:', err)
-    } finally {
-      setUploading(false)
-      // Reset file input so se puede subir el mismo archivo de nuevo
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    }
-  }
 
   const sorted = [...banners].sort(
     (a, b) => KEY_ORDER.indexOf(a.key) - KEY_ORDER.indexOf(b.key)
@@ -50,12 +28,10 @@ export default function BannersAdminPage() {
 
   const startEdit = (banner: Banner) => {
     setEditing({ id: banner.id, image_url: banner.image_url })
-    setPreviewUrl(banner.image_url)
   }
 
-  const handleUrlChange = (val: string) => {
-    setEditing((e) => e ? { ...e, image_url: val } : e)
-    setPreviewUrl(val)
+  const handleImageChange = (url: string) => {
+    setEditing((e) => e ? { ...e, image_url: url } : e)
   }
 
   const handleSave = async () => {
@@ -66,7 +42,6 @@ export default function BannersAdminPage() {
     // 1. Optimistic local update — UI reflects change immediately
     updateBannerLocally(targetId, newUrl)
     setEditing(null)
-    setPreviewUrl('')
     try {
       const supabase = createClient()
       const { error } = await supabase
@@ -147,7 +122,7 @@ export default function BannersAdminPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {sorted.map((banner) => {
             const isEditing = editing?.id === banner.id
-            const currentPreview = isEditing ? previewUrl : banner.image_url
+            const currentPreview = isEditing ? editing.image_url : banner.image_url
 
             return (
               <div
@@ -176,13 +151,6 @@ export default function BannersAdminPage() {
                     </div>
                   )}
 
-                  {/* Live indicator when editing */}
-                  {isEditing && previewUrl && (
-                    <div className="absolute top-3 right-3 px-2 py-1 bg-black/60 text-white text-[10px] rounded-full font-medium">
-                      Vista previa
-                    </div>
-                  )}
-
                   {/* Saved flash */}
                   {savedId === banner.id && (
                     <div className="absolute inset-0 bg-green-500/10 flex items-center justify-center">
@@ -207,77 +175,16 @@ export default function BannersAdminPage() {
 
                   {isEditing ? (
                     <div className="space-y-4">
-                      {/* Upload Zone Card — prominent */}
-                      <div
-                        onClick={() => fileInputRef.current?.click()}
-                        onDragOver={(e) => {
-                          e.preventDefault()
-                          e.currentTarget.classList.add('bg-[#C4322B]/10', 'border-[#C4322B]')
-                        }}
-                        onDragLeave={(e) => {
-                          e.currentTarget.classList.remove('bg-[#C4322B]/10', 'border-[#C4322B]')
-                        }}
-                        onDrop={(e) => {
-                          e.preventDefault()
-                          e.currentTarget.classList.remove('bg-[#C4322B]/10', 'border-[#C4322B]')
-                          const file = e.dataTransfer.files?.[0]
-                          if (file?.type.startsWith('image/')) handleFileUpload(file)
-                        }}
-                        className="relative border-2 border-dashed border-[#243329]/20 rounded-2xl p-8 bg-[#F5EFE8]/40 hover:bg-[#F5EFE8] cursor-pointer transition-all flex flex-col items-center justify-center min-h-[160px] gap-3"
-                      >
-                        {uploading ? (
-                          <>
-                            <Loader2 className="w-8 h-8 text-[#C4322B] animate-spin" />
-                            <p className="text-sm font-semibold text-[#243329]">Subiendo imagen...</p>
-                          </>
-                        ) : (
-                          <>
-                            <CloudUpload className="w-10 h-10 text-[#C4322B]" />
-                            <div className="text-center">
-                              <p className="text-sm font-semibold text-[#243329]">
-                                Arrastrá la imagen o hacé click para seleccionar
-                              </p>
-                              <p className="text-xs text-[#243329]/50 mt-1">
-                                PNG, JPG, GIF hasta 10MB
-                              </p>
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      {/* URL manual input */}
-                      <div>
-                        <label className="block text-xs font-semibold text-[#243329]/60 mb-1.5">
-                          O pegá la URL directamente
-                        </label>
-                        <textarea
-                          value={editing.image_url}
-                          onChange={(e) => handleUrlChange(e.target.value)}
-                          placeholder="https://ejemplo.com/imagen.jpg"
-                          rows={2}
-                          className="w-full px-3 py-2 text-xs border border-[#243329]/15 rounded-xl bg-white text-[#243329] placeholder:text-[#243329]/25 focus:outline-none focus:ring-2 focus:ring-[#C4322B]/20 focus:border-[#C4322B]/40 resize-none transition-all font-mono"
-                        />
-                      </div>
-
-                      {/* Preview */}
-                      {previewUrl && (
-                        <div className="relative rounded-xl overflow-hidden bg-[#F5EFE8] border border-[#243329]/10">
-                          <Image
-                            src={previewUrl}
-                            alt="Preview"
-                            width={400}
-                            height={200}
-                            className="w-full h-auto object-cover"
-                            unoptimized
-                          />
-                        </div>
-                      )}
-
-                      {/* Actions */}
-                      <div className="flex gap-2 pt-2">
+                      <ImageUploader
+                        value={editing.image_url}
+                        onChange={handleImageChange}
+                        label={PAGE_NAMES[banner.key] ?? banner.key}
+                        height={180}
+                      />
+                      <div className="flex gap-2">
                         <button
                           onClick={handleSave}
-                          disabled={saving || uploading || !editing.image_url.trim()}
+                          disabled={saving || !editing.image_url.trim()}
                           className="flex-1 py-2.5 bg-[#C4322B] text-white text-xs font-semibold rounded-lg hover:bg-[#C4322B]/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
                         >
                           {saving ? (
@@ -287,7 +194,7 @@ export default function BannersAdminPage() {
                           )}
                         </button>
                         <button
-                          onClick={() => { setEditing(null); setPreviewUrl('') }}
+                          onClick={() => setEditing(null)}
                           className="flex-1 py-2.5 bg-[#F5EFE8] text-[#243329] text-xs font-semibold rounded-lg hover:bg-[#243329]/10 transition-colors"
                         >
                           Cancelar
@@ -309,17 +216,6 @@ export default function BannersAdminPage() {
         </div>
       )}
 
-      {/* Hidden file input — global for all banners */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0]
-          if (file) handleFileUpload(file)
-        }}
-      />
     </div>
   )
 }

@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useProductsContext, type Product } from '@/components/products-provider'
 import Image from 'next/image'
 import {
   Wifi, WifiOff, Loader2, CheckCircle2, Pencil, Trash2,
-  Eye, EyeOff, Upload, X, CloudUpload,
+  Eye, EyeOff,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,6 +19,7 @@ import {
   AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { ImageUploader } from '@/components/image-uploader'
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(price)
@@ -28,11 +29,9 @@ export default function ProductsAdminPage() {
   const [editProduct, setEditProduct] = useState<Product | null>(null)
   const [editForm, setEditForm] = useState<any>(null)
   const [saving, setSaving] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const [savedId, setSavedId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const openEdit = (product: Product) => {
     setEditProduct(product)
@@ -42,31 +41,6 @@ export default function ProductsAdminPage() {
   const closeEdit = () => {
     setEditProduct(null)
     setEditForm(null)
-  }
-
-  // Upload image to Supabase Storage
-  const handleFileUpload = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      console.error('[productos-admin] File is not an image')
-      return
-    }
-    setUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const res = await fetch('/api/upload', { method: 'POST', body: formData })
-      const data = await res.json()
-      if (data.url) {
-        setEditForm((prev: any) => ({ ...prev, image: data.url }))
-      } else if (data.error) {
-        console.error('[productos-admin] Upload error:', data.error)
-      }
-    } catch (err) {
-      console.error('[productos-admin] Upload error:', err)
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    }
   }
 
   const handleSave = async () => {
@@ -278,81 +252,12 @@ export default function ProductsAdminPage() {
 
           {editForm && (
             <div className="px-6 py-5 space-y-4 max-h-[80vh] overflow-y-auto">
-              {/* Image upload zone — prominent drag & drop */}
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => {
-                  e.preventDefault()
-                  e.currentTarget.classList.add('bg-[#C4322B]/10', 'border-[#C4322B]')
-                }}
-                onDragLeave={(e) => {
-                  e.currentTarget.classList.remove('bg-[#C4322B]/10', 'border-[#C4322B]')
-                }}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  e.currentTarget.classList.remove('bg-[#C4322B]/10', 'border-[#C4322B]')
-                  const file = e.dataTransfer.files?.[0]
-                  if (file?.type.startsWith('image/')) handleFileUpload(file)
-                }}
-                className="relative border-2 border-dashed border-[#243329]/20 rounded-2xl p-6 bg-[#F5EFE8]/40 hover:bg-[#F5EFE8] cursor-pointer transition-all flex flex-col items-center justify-center min-h-[140px] gap-2"
-              >
-                {uploading ? (
-                  <>
-                    <Loader2 className="w-8 h-8 text-[#C4322B] animate-spin" />
-                    <p className="text-xs font-semibold text-[#243329]">Subiendo...</p>
-                  </>
-                ) : (
-                  <>
-                    <CloudUpload className="w-10 h-10 text-[#C4322B]" />
-                    <div className="text-center">
-                      <p className="text-xs font-semibold text-[#243329]">
-                        Arrastrá la imagen o hacé click
-                      </p>
-                      <p className="text-[10px] text-[#243329]/50 mt-0.5">
-                        PNG, JPG, GIF
-                      </p>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Preview */}
-              {editForm.image && (
-                <div className="relative w-full h-40 rounded-xl overflow-hidden bg-[#F5EFE8] border border-[#243329]/10">
-                  <Image
-                    key={editForm.image}
-                    src={editForm.image}
-                    alt="Preview"
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                </div>
-              )}
-
-              {/* URL input */}
-              <div>
-                <label className="block text-xs font-semibold text-[#243329]/60 mb-1.5">
-                  O pegá la URL directamente
-                </label>
-                <Input
-                  value={editForm.image || ''}
-                  onChange={(e) => setEditForm({ ...editForm, image: e.target.value })}
-                  placeholder="https://ejemplo.com/imagen.jpg"
-                  className="font-mono text-xs bg-white border-[#243329]/15 focus:border-[#C4322B]/40"
-                />
-              </div>
-
-              {/* Hidden file input */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) handleFileUpload(file)
-                }}
+              {/* Image upload — Supabase Storage */}
+              <ImageUploader
+                value={editForm.image || ''}
+                onChange={(url) => setEditForm({ ...editForm, image: url })}
+                label={editForm.name}
+                height={160}
               />
 
               {/* Name */}
@@ -458,7 +363,7 @@ export default function ProductsAdminPage() {
                 </Button>
                 <Button
                   onClick={handleSave}
-                  disabled={saving || uploading}
+                  disabled={saving}
                   className="flex-1 bg-[#C4322B] hover:bg-[#C4322B]/90 text-white font-semibold"
                 >
                   {saving ? (
