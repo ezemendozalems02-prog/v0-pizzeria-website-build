@@ -42,7 +42,7 @@ export function RealtimeBanner({
         />
       </div>
       {children && (
-        <div className="absolute inset-0 z-10 flex items-end">
+        <div className="absolute inset-0 z-10 flex items-end pb-8 sm:pb-12">
           {children}
         </div>
       )}
