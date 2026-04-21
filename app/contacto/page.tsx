@@ -17,7 +17,7 @@ export default function ContactPage() {
         bannerKey="contacto"
         fallbackUrl="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20contacto%20-mOHjngdnmrB7nJQdJtJvtjPuSjFijx.jpg"
         alt="Contacto - TOTORE"
-        className="h-[40vh] min-h-[300px]"
+        className="w-full"
         priority
       />
 

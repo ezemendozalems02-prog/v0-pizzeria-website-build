@@ -14,7 +14,7 @@ export default function DeliveryPage() {
         bannerKey="pedido-delivery"
         fallbackUrl="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20delivery%20%283%29-YIekcMePw6CwWhgh1SfnNmJ4vYKMdk.jpg"
         alt="Delivery - TOTORE"
-        className="h-[40vh] min-h-[320px]"
+        className="w-full"
         priority
       />
 

@@ -14,7 +14,7 @@ export default function AboutPage() {
         bannerKey="sobre-nosotros"
         fallbackUrl="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20nosotros%20%281%29-S5TVL5cAsT2OhrRLD5w5p32uM45UTX.jpg"
         alt="Nosotros - TOTORE"
-        className="h-[40vh] min-h-[300px]"
+        className="w-full"
         priority
       />
 
