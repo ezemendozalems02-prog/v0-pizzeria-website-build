@@ -1,3 +1,4 @@
+import type React from "react"
 import Image from "next/image"
 import { RealtimeBanner } from "@/components/realtime-banner"
 
@@ -76,22 +77,22 @@ export default function AboutPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <ValueCard
-              icon="🌾"
+              icon={<IconLeaf />}
               title="Frescura"
               description="Ingredientes seleccionados cuidadosamente y preparaciones del día para garantizar calidad en cada bocado."
             />
             <ValueCard
-              icon="⭐"
+              icon={<IconWheat />}
               title="Calidad"
               description="Estándares premium en cada detalle, desde la selección de productos hasta la presentación final."
             />
             <ValueCard
-              icon="❤️"
+              icon={<IconFlame />}
               title="Experiencia simple"
               description="Un proceso de pedido pensado para vos, intuitivo, rápido y sin complicaciones."
             />
             <ValueCard
-              icon="👥"
+              icon={<IconHandshake />}
               title="Compromiso"
               description="Trabajamos cada día para superar expectativas y crear momentos especiales alrededor de la comida."
             />
@@ -107,13 +108,15 @@ function ValueCard({
   title,
   description,
 }: {
-  icon: string
+  icon: React.ReactNode
   title: string
   description: string
 }) {
   return (
-    <div className="bg-background rounded-xl p-6 border border-border hover:border-primary/20 transition-colors">
-      <div className="text-4xl mb-4">{icon}</div>
+    <div className="bg-background rounded-xl p-6 border border-border hover:border-primary/30 transition-colors group">
+      <div className="w-12 h-12 rounded-lg bg-primary/8 flex items-center justify-center text-primary mb-5 group-hover:bg-primary/15 transition-colors">
+        {icon}
+      </div>
       <h3 className="font-serif text-xl font-semibold text-foreground mb-3">
         {title}
       </h3>
@@ -121,5 +124,47 @@ function ValueCard({
         {description}
       </p>
     </div>
+  )
+}
+
+function IconLeaf() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+      <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+    </svg>
+  )
+}
+
+function IconWheat() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 22 16 8" />
+      <path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" />
+      <path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" />
+      <path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" />
+      <path d="M20 2h2v2a4 4 0 0 1-4 4h-2V6a4 4 0 0 1 4-4Z" />
+      <path d="M11.47 17.47 13 19l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L5 19l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z" />
+    </svg>
+  )
+}
+
+function IconFlame() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+    </svg>
+  )
+}
+
+function IconHandshake() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m11 17 2 2a1 1 0 1 0 3-3" />
+      <path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4" />
+      <path d="m21 3 1 11h-2" />
+      <path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3" />
+      <path d="M3 4h8" />
+    </svg>
   )
 }

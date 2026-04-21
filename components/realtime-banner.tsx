@@ -25,46 +25,27 @@ export function RealtimeBanner({
   const banner = getBanner(bannerKey)
   const imageUrl = banner?.image_url || fallbackUrl
 
+  // Para mobile y desktop usamos la misma estructura: imagen natural + children absolutos
   return (
-    <>
-      {/* Mobile: imagen completa con aspect ratio natural, sin recorte */}
-      <div className={cn('block sm:hidden w-full overflow-hidden', loading && 'bg-muted animate-pulse')}>
-        <div style={{ opacity: loading ? 0 : 1, transition: 'opacity 0.7s' }}>
-          <Image
-            key={imageUrl}
-            src={imageUrl}
-            alt={alt}
-            width={1200}
-            height={600}
-            className="w-full h-auto object-contain"
-            priority={priority}
-            unoptimized
-          />
-        </div>
+    <div className={cn('relative w-full overflow-hidden', className)}>
+      {loading && <div className="absolute inset-0 bg-muted animate-pulse z-10" />}
+      <div style={{ opacity: loading ? 0 : 1, transition: 'opacity 0.7s' }}>
+        <Image
+          key={imageUrl}
+          src={imageUrl}
+          alt={alt}
+          width={1400}
+          height={700}
+          className="w-full h-auto block"
+          priority={priority}
+          unoptimized
+        />
       </div>
-
-      {/* Desktop: altura flexible con object-contain */}
-      <div className={cn('hidden sm:block relative w-full overflow-hidden bg-muted', className, loading && 'animate-pulse')}>
-        {loading && <div className="absolute inset-0 bg-muted animate-pulse" />}
-        <div
-          className="relative w-full transition-opacity duration-700"
-          style={{ opacity: loading ? 0 : 1 }}
-        >
-          <Image
-            key={imageUrl + '-desktop'}
-            src={imageUrl}
-            alt={alt}
-            width={1400}
-            height={700}
-            className="w-full h-auto object-contain"
-            priority={priority}
-            unoptimized
-          />
+      {children && (
+        <div className="absolute inset-0 z-10 flex items-end">
+          {children}
         </div>
-        {children && (
-          <div className="relative z-10">{children}</div>
-        )}
-      </div>
-    </>
+      )}
+    </div>
   )
 }

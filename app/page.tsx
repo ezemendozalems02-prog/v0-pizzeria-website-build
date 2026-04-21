@@ -13,18 +13,17 @@ export default function HomePage() {
         bannerKey="home"
         fallbackUrl="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20principal%20inicio-sgLjm1UietPhuULpK6QoJWyqFRFgFj.jpg"
         alt="Pizza napolitana artesanal - TOTORE fresco, auténtica"
-        className="relative h-[60vh] sm:h-[90vh] min-h-[320px] flex items-center"
         priority
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-20 flex items-end h-full">
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-            <Button asChild size="sm" className="sm:size-lg bg-primary hover:bg-primary/90 text-primary-foreground">
+        <div className="w-full px-4 sm:px-8 pb-6 sm:pb-10">
+          <div className="flex flex-row gap-3">
+            <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
               <Link href="/pedido-delivery">
                 Pedir Delivery
-                <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
+                <ArrowRight className="ml-2 h-3 w-3" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="sm" className="sm:size-lg border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+            <Button asChild variant="outline" size="sm" className="bg-background/20 backdrop-blur-sm border-white/40 text-white hover:bg-white/20 shadow-lg">
               <Link href="/pedido-delivery">
                 Ver Menú
               </Link>
