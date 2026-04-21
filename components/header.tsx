@@ -24,14 +24,14 @@ export function Header() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center shrink-0">
             <Image
               src="/images/logo.png"
               alt="TOTORE Logo"
               width={160}
               height={40}
               priority
-              className="h-10 w-auto"
+              className="h-6 w-auto"
             />
           </Link>
 
