@@ -160,60 +160,13 @@ export default function EncuestaPage() {
         <p className="text-[#243329]/50 text-xs tracking-widest uppercase">Encuesta de satisfaccion</p>
       </header>
 
-      {/* Progress bar + step dots */}
-      <div className="px-6 pb-6 max-w-lg mx-auto w-full">
-        {/* Step dots */}
-        <div className="flex items-center justify-between mb-3">
-          {STEPS.map((s, i) => (
-            <button
-              key={s}
-              onClick={() => {
-                // Only allow going back to completed steps
-                if (i < currentStep) goTo(i)
-              }}
-              disabled={i > currentStep}
-              className="flex flex-col items-center gap-1 group"
-            >
-              <div
-                className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-medium transition-all duration-300 ${
-                  i < currentStep
-                    ? 'bg-[#C4322B] border-[#C4322B] text-white'
-                    : i === currentStep
-                    ? 'bg-white border-[#C4322B] text-[#C4322B]'
-                    : 'bg-transparent border-[#243329]/20 text-[#243329]/30'
-                }`}
-              >
-                {i < currentStep ? (
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : (
-                  i + 1
-                )}
-              </div>
-              <span
-                className={`text-[10px] tracking-wide uppercase hidden sm:block transition-colors duration-300 ${
-                  i === currentStep ? 'text-[#C4322B]' : 'text-[#243329]/30'
-                }`}
-              >
-                {STEP_LABELS[s]}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* Progress track */}
+      {/* Progress bar only */}
+      <div className="px-6 pb-8 max-w-lg mx-auto w-full">
         <div className="relative h-1 bg-[#243329]/10 rounded-full overflow-hidden">
           <div
             className="absolute left-0 top-0 h-full bg-[#C4322B] rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${((currentStep) / (totalSteps - 1)) * 100}%` }}
+            style={{ width: `${(currentStep / (totalSteps - 1)) * 100}%` }}
           />
-        </div>
-
-        {/* Step count */}
-        <div className="flex justify-between mt-2">
-          <span className="text-[10px] text-[#243329]/40 tracking-widest uppercase">{STEP_LABELS[stepKey]}</span>
-          <span className="text-[10px] text-[#243329]/40">{currentStep + 1} / {totalSteps}</span>
         </div>
       </div>
 
