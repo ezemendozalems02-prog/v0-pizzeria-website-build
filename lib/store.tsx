@@ -120,7 +120,7 @@ const initialConfig: SiteConfig = {
   address: "San Martín 123, CABA",
   hours: "Lun-Dom 20:00-00:00",
   instagram: "@totore_pizzeria",
-  footerText: "Pizza napolitana con identidad propia. Delivery desde las 20hs.",
+  footerText: "Pizza estilo italiana en Ciudad Jardín",
   mapEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!...",
 }
 
