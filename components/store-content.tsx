@@ -63,7 +63,7 @@ export function StoreContent() {
             {/* Map */}
             <div className="aspect-video lg:aspect-[4/3] rounded-xl overflow-hidden bg-muted">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3283.5!2d-58.6!3d-34.6!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzTCsDM2JzAwLjAiUyA1OMKwMzYnMDAuMCJX!5e0!3m2!1sen!2sar!4v1234567890"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3283.8156!2d-58.59814!3d-34.60194!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bcc5c5c5c5c5c5%3A0x0!2zTmV3Y29tYmU!5e0!3m2!1sen!2sar!4v1234567890"
                 width="100%"
                 height="100%"
                 style={{ border: 0 } as any}
