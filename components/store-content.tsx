@@ -40,11 +40,13 @@ export function StoreContent() {
             <FeaturedBanner
               image="/images/favorites-banner.jpg"
               title="Favoritas del barrio"
+              subtitle="12 sabores de pizza"
               href="/pedido-delivery"
             />
             <FeaturedBanner
               image="/images/promos-banner.jpg"
               title="Promos Totore"
+              subtitle="Bebidas & postres"
               href="/pedido-delivery"
             />
           </div>
@@ -141,10 +143,12 @@ function ExperienceCard({
 function FeaturedBanner({
   image,
   title,
+  subtitle,
   href,
 }: {
   image: string
   title: string
+  subtitle?: string
   href: string
 }) {
   return (
@@ -157,9 +161,14 @@ function FeaturedBanner({
       />
       <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-        <h3 className="font-serif text-lg sm:text-2xl font-bold text-primary-foreground mb-2 sm:mb-3">
+        <h3 className="font-serif text-lg sm:text-2xl font-bold text-primary-foreground mb-1 sm:mb-2">
           {title}
         </h3>
+        {subtitle && (
+          <p className="text-xs sm:text-sm text-primary-foreground/80 mb-2 sm:mb-3">
+            {subtitle}
+          </p>
+        )}
         <span className="inline-flex items-center text-xs sm:text-sm font-medium text-primary-foreground/90 group-hover:text-primary-foreground transition-colors">
           Ver Menú
           <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
