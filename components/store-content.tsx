@@ -152,14 +152,16 @@ function FeaturedBanner({
   href: string
 }) {
   return (
-    <Link href={href} className="group relative aspect-[4/3] sm:aspect-[16/9] rounded-xl overflow-hidden block">
-      <Image
-        src={image}
-        alt={title}
-        fill
-        className="object-cover transition-transform duration-500 group-hover:scale-105"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 to-transparent" />
+    <Link href={href} className="group relative rounded-xl overflow-hidden block">
+      <div className="relative w-full aspect-[16/9] sm:aspect-[2/1]">
+        <Image
+          src={image}
+          alt={title}
+          fill
+          className="object-contain transition-transform duration-500 group-hover:scale-105 bg-muted"
+        />
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 via-secondary/20 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
         <h3 className="font-serif text-lg sm:text-2xl font-bold text-primary-foreground mb-1 sm:mb-2">
           {title}
