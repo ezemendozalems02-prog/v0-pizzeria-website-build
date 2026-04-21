@@ -2,7 +2,8 @@
 
 import { useStore } from '@/lib/store'
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import Image from 'next/image'
+import { MapPin, Clock, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export function StoreContent() {
@@ -63,7 +64,7 @@ export function StoreContent() {
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3283.5!2d-58.6!3d-34.6!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzTCsDM2JzAwLjAiUyA1OMKwMzYnMDAuMCJX!5e0!3m2!1sen!2sar!4v1234567890"
                 width="100%"
                 height="100%"
-                style={{ border: 0 }}
+                style={{ border: 0 } as any}
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
@@ -74,7 +75,7 @@ export function StoreContent() {
             <div className="flex flex-col gap-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <PinIcon className="w-6 h-6 text-primary" />
+                  <MapPin className="w-6 h-6 text-primary" />
                 </div>
                 <div>
                   <h3 className="font-medium text-foreground">Dirección</h3>
@@ -85,7 +86,7 @@ export function StoreContent() {
               </div>
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <ClockIcon className="w-6 h-6 text-primary" />
+                  <Clock className="w-6 h-6 text-primary" />
                 </div>
                 <div>
                   <h3 className="font-medium text-foreground">Horarios</h3>
@@ -123,7 +124,7 @@ function ExperienceCard({
   description: string
 }) {
   return (
-    <div className="flex flex-col items-center text-center gap-4">
+    <div className="flex flex-col items-center text-center gap-4 p-6">
       <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
         {icon}
       </div>
@@ -131,7 +132,7 @@ function ExperienceCard({
         <h3 className="font-serif text-xl font-semibold text-foreground mb-2">
           {title}
         </h3>
-        <p className="text-muted-foreground">{description}</p>
+        <p className="text-muted-foreground text-sm">{description}</p>
       </div>
     </div>
   )
@@ -148,10 +149,11 @@ function FeaturedBanner({
 }) {
   return (
     <Link href={href} className="group relative aspect-[4/3] sm:aspect-[16/9] rounded-xl overflow-hidden block">
-      <img
+      <Image
         src={image}
         alt={title}
-        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        fill
+        className="object-cover transition-transform duration-500 group-hover:scale-105"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
@@ -168,38 +170,32 @@ function FeaturedBanner({
 }
 
 function getIconComponent(iconName: string) {
+  const iconProps = { className: 'w-8 h-8 text-primary' }
+  
   switch (iconName) {
     case 'pizza':
-      return <PizzaIcon className="w-8 h-8 text-primary" />
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...iconProps}>
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5z" />
+        </svg>
+      )
     case 'delivery':
-      return <DeliveryIcon className="w-8 h-8 text-primary" />
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...iconProps}>
+          <path d="M18 18.5a1.5 1.5 0 0 1-1.5-1.5 1.5 1.5 0 0 1 1.5-1.5 1.5 1.5 0 0 1 1.5 1.5 1.5 1.5 0 0 1-1.5 1.5m1.5-9l1.96 2.5H17V9.5m-11 9a1.5 1.5 0 0 1-1.5-1.5 1.5 1.5 0 0 1 1.5-1.5 1.5 1.5 0 0 1 1.5 1.5 1.5 1.5 0 0 1-1.5 1.5M5 9.5h8V12H4V9.5M3 4h11v2H3Z" />
+        </svg>
+      )
     case 'share':
-      return <ShareIcon className="w-8 h-8 text-primary" />
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...iconProps}>
+          <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.27c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.56 9.31 6.88 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.88 0 1.56-.31 2.04-.81l7.05 4.27c-.05.23-.09.46-.09.7 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z" />
+        </svg>
+      )
     default:
-      return <PizzaIcon className="w-8 h-8 text-primary" />
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...iconProps}>
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5z" />
+        </svg>
+      )
   }
-}
-
-function PizzaIcon(props: any) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5z" />
-    </svg>
-  )
-}
-
-function DeliveryIcon(props: any) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-      <path d="M18 18.5a1.5 1.5 0 0 1-1.5-1.5 1.5 1.5 0 0 1 1.5-1.5 1.5 1.5 0 0 1 1.5 1.5 1.5 1.5 0 0 1-1.5 1.5m1.5-9l1.96 2.5H17V9.5m-11 9a1.5 1.5 0 0 1-1.5-1.5 1.5 1.5 0 0 1 1.5-1.5 1.5 1.5 0 0 1 1.5 1.5 1.5 1.5 0 0 1-1.5 1.5M5 9.5h8V12H4V9.5M3 4h11v2H3Z" />
-    </svg>
-  )
-}
-
-function ShareIcon(props: any) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-      <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.27c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.56 9.31 6.88 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.88 0 1.56-.31 2.04-.81l7.05 4.27c-.05.23-.09.46-.09.7 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z" />
-    </svg>
-  )
 }
