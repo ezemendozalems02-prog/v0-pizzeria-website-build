@@ -3,6 +3,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { MapPin, Clock, ArrowRight } from "lucide-react"
 import { RealtimeBanner } from "@/components/realtime-banner"
+import { StoreContent } from "@/components/store-content"
 
 export default function HomePage() {
   return (
@@ -33,111 +34,7 @@ export default function HomePage() {
       </RealtimeBanner>
 
       {/* Experience Section */}
-      <section className="py-20 bg-background">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-center text-foreground mb-12">
-            Un lugar para cada momento
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <ExperienceCard
-              icon={<PizzaIcon className="w-8 h-8" />}
-              title="Pizza Artesanal"
-              description="Pizza napolitana hecha con ingredientes de calidad y fermentación cuidada."
-            />
-            <ExperienceCard
-              icon={<DeliveryIcon className="w-8 h-8" />}
-              title="Delivery Simple"
-              description="Pedí directo desde la web y mandá el pedido por WhatsApp en segundos."
-            />
-            <ExperienceCard
-              icon={<ShareIcon className="w-8 h-8" />}
-              title="Para Compartir"
-              description="Pizza, cerveza y buena compañía. El combo perfecto."
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Section */}
-      <section className="py-20 bg-muted">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-center text-foreground mb-12">
-            Lo que nos hace únicos
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FeaturedBanner
-              image="/images/favorites-banner.jpg"
-              title="Favoritas del barrio"
-              href="/pedido-delivery"
-            />
-            <FeaturedBanner
-              image="/images/promos-banner.jpg"
-              title="Promos Totore"
-              href="/pedido-delivery"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Visit Us Section */}
-      <section className="py-20 bg-background">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-center text-foreground mb-12">
-            Vení a Totore
-          </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            {/* Map */}
-            <div className="aspect-video lg:aspect-[4/3] rounded-xl overflow-hidden bg-muted">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3283.5!2d-58.6!3d-34.6!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzTCsDM2JzAwLjAiUyA1OMKwMzYnMDAuMCJX!5e0!3m2!1sen!2sar!4v1234567890"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Ubicación de Totore"
-              />
-            </div>
-            {/* Info */}
-            <div className="flex flex-col gap-6">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-foreground">Dirección</h3>
-                  <p className="text-muted-foreground mt-1">
-                    Balbín 2916, El Palomar, Buenos Aires
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-foreground">Horarios</h3>
-                  <p className="text-muted-foreground mt-1">
-                    Martes a Domingo<br />
-                    20:00 a 23:30
-                  </p>
-                </div>
-              </div>
-              <Button asChild className="w-fit mt-4 bg-secondary hover:bg-secondary/90 text-secondary-foreground">
-                <a
-                  href="https://www.google.com/maps/dir//Balbin+2916+El+Palomar+Buenos+Aires"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Cómo llegar
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </a>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <StoreContent />
     </>
   )
 }

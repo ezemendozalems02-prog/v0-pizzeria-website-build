@@ -144,21 +144,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<StoreProduct[]>([])
   const [categories] = useState<StoreCategory[]>(initialCategories)
   const [banners] = useState<Banner[]>(initialBanners)
-  const [content] = useState<SiteContent>(initialContent)
+  const [content, setContent] = useState<SiteContent>(initialContent)
   const [config] = useState<SiteConfig>(initialConfig)
   const [loading, setLoading] = useState(true)
 
   const supabase = createClient()
 
-  // Cargar productos desde Supabase AL MONTAR y suscribirse a cambios en tiempo real
+  // Cargar productos y contenido desde Supabase AL MONTAR y suscribirse a cambios en tiempo real
   useEffect(() => {
     loadProducts()
+    loadContent()
     subscribeToProductsChanges()
+    subscribeToContentChanges()
   }, [])
 
   const loadProducts = async () => {
     try {
-      setLoading(true)
       const { data, error } = await supabase
         .from("products")
         .select("*")
@@ -183,9 +184,40 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setProducts(mappedProducts)
       console.log("[Store] Products loaded:", mappedProducts.length)
     } catch (err) {
-      console.error("[Store] Unexpected error:", err)
+      console.error("[Store] Unexpected error loading products:", err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadContent = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("site_content")
+        .select("*")
+        .eq("id", "home")
+        .single()
+
+      if (error) {
+        console.error("[Store] Error loading content:", error)
+        return
+      }
+
+      if (data) {
+        const mappedContent: SiteContent = {
+          heroTitle: data.hero_title,
+          heroSubtitle: data.hero_subtitle,
+          heroBadge: data.hero_badge,
+          experienceTitle: data.experience_title,
+          experienceCards: data.experience_cards,
+          uniqueTitle: data.unique_title,
+          visitTitle: data.visit_title,
+        }
+        setContent(mappedContent)
+        console.log("[Store] Content loaded from DB")
+      }
+    } catch (err) {
+      console.error("[Store] Unexpected error loading content:", err)
     }
   }
 
@@ -200,8 +232,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           table: "products",
         },
         (payload: any) => {
-          console.log("[Store] Realtime update detected:", payload.eventType)
+          console.log("[Store] Realtime products update detected:", payload.eventType)
           loadProducts()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }
+
+  const subscribeToContentChanges = () => {
+    const subscription = supabase
+      .channel("content-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "site_content",
+        },
+        (payload: any) => {
+          console.log("[Store] Realtime content update detected:", payload.eventType)
+          loadContent()
         }
       )
       .subscribe()
