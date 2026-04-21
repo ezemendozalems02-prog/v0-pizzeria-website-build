@@ -15,7 +15,6 @@ import {
   X,
   ExternalLink,
   ChevronRight,
-  MessageSquare,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
@@ -27,7 +26,6 @@ const NAV_ITEMS = [
   { href: "/admin/categorias", label: "Categorías", icon: Tag },
   { href: "/admin/banners", label: "Banners", icon: ImageIcon },
   { href: "/admin/contenido", label: "Contenido", icon: FileText },
-  { href: "/admin/encuestas", label: "Encuestas", icon: MessageSquare },
   { href: "/admin/configuracion", label: "Configuración", icon: Settings },
 ]
 
