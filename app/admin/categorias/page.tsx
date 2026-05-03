@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { createClient } from "@/lib/supabase/client"
-import { createCategory, updateCategory, deleteCategory, loadCategories as loadCategoriesAction } from "./actions"
+import { createCategory, updateCategory, deleteCategory } from "./actions"
 
 interface Category {
   id: string
