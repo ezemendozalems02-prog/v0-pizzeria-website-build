@@ -24,6 +24,7 @@ export interface StoreProduct {
 
 export interface StoreCategory {
   id: string
+  slug: string
   label: string
 }
 
@@ -58,8 +59,8 @@ export interface SiteConfig {
 // ─── Initial Data ─────────────────────────────────────────────────────────────
 
 const initialCategories: StoreCategory[] = [
-  { id: "pizzas", label: "Pizzas" },
-  { id: "bebidas", label: "Bebidas" },
+  { id: "efb0f5e5-c9c3-4273-84fc-b8e2ed0529a5", slug: "pizzas", label: "Pizzas" },
+  { id: "4208fb61-6dea-486c-bfe7-5376e8812c84", slug: "bebidas", label: "Bebidas" },
 ]
 
 const initialBanners: Banner[] = [
@@ -153,13 +154,37 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const supabase = createClient()
 
-  // Cargar productos y contenido desde Supabase AL MONTAR y suscribirse a cambios en tiempo real
+  // Cargar productos, categorías y contenido desde Supabase AL MONTAR
   useEffect(() => {
+    loadCategories()
     loadProducts()
     loadContent()
     subscribeToProductsChanges()
     subscribeToContentChanges()
   }, [])
+
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, slug, label")
+        .order("label", { ascending: true })
+
+      if (error) {
+        console.error("[Store] Error loading categories:", error)
+        return
+      }
+
+      const mapped: StoreCategory[] = (data || []).map((c: any) => ({
+        id: c.id,
+        label: c.label,
+        slug: c.slug,
+      }))
+      setCategories(mapped)
+    } catch (err) {
+      console.error("[Store] Unexpected error loading categories:", err)
+    }
+  }
 
   const loadProducts = async () => {
     try {
@@ -173,19 +198,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      // Mapear los datos de la DB a StoreProduct
+      // Usar category_id directamente (UUID real de la DB)
       const mappedProducts: StoreProduct[] = (data || []).map((p: any) => ({
         id: p.id,
         name: p.name,
         price: p.price,
         description: p.description,
-        category: p.category_id === "1" ? "pizzas" : "bebidas",
+        category: p.category_id ?? "",
         image: p.image,
         active: p.active,
       }))
 
       setProducts(mappedProducts)
-      console.log("[Store] Products loaded:", mappedProducts.length)
     } catch (err) {
       console.error("[Store] Unexpected error loading products:", err)
     } finally {
