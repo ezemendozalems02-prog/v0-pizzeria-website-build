@@ -136,13 +136,16 @@ interface StoreContextType {
   addProduct: (product: StoreProduct) => void
   updateProduct: (product: StoreProduct) => void
   deleteProduct: (id: string) => void
+  addCategory: (category: StoreCategory) => void
+  updateCategory: (category: StoreCategory) => void
+  deleteCategory: (id: string) => void
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined)
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<StoreProduct[]>([])
-  const [categories] = useState<StoreCategory[]>(initialCategories)
+  const [categories, setCategories] = useState<StoreCategory[]>(initialCategories)
   const [banners] = useState<Banner[]>(initialBanners)
   const [content, setContent] = useState<SiteContent>(initialContent)
   const [config] = useState<SiteConfig>(initialConfig)
@@ -277,6 +280,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setProducts((prev) => prev.filter((p) => p.id !== id))
   }, [])
 
+  const addCategory = useCallback((category: StoreCategory) => {
+    setCategories((prev) => [...prev, category])
+  }, [])
+
+  const updateCategory = useCallback((category: StoreCategory) => {
+    setCategories((prev) => prev.map((c) => (c.id === category.id ? category : c)))
+  }, [])
+
+  const deleteCategory = useCallback((id: string) => {
+    setCategories((prev) => prev.filter((c) => c.id !== id))
+  }, [])
+
   return (
     <StoreContext.Provider
       value={{
@@ -289,6 +304,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         addProduct,
         updateProduct,
         deleteProduct,
+        addCategory,
+        updateCategory,
+        deleteCategory,
       }}
     >
       {children}
