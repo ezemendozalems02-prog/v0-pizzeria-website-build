@@ -92,11 +92,9 @@ export default function CategoriasPage() {
     setSaving("new")
     setError(null)
     try {
-      const { error: insertErr } = await supabase
-        .from("categories")
-        .insert({ slug, label: trimmed })
+      const result = await createCategory(trimmed, slug)
 
-      if (insertErr) throw insertErr
+      if (!result.success) throw new Error(result.error)
 
       setNewLabel("")
       setShowNew(false)
@@ -113,15 +111,19 @@ export default function CategoriasPage() {
     const trimmed = editLabel.trim()
     if (!trimmed) { setEditingId(null); return }
 
+    const slug = trimmed
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "")
+
     setSaving(cat.id)
     setError(null)
     try {
-      const { error: updateErr } = await supabase
-        .from("categories")
-        .update({ label: trimmed })
-        .eq("id", cat.id)
+      const result = await updateCategory(cat.id, trimmed, slug)
 
-      if (updateErr) throw updateErr
+      if (!result.success) throw new Error(result.error)
 
       setEditingId(null)
       await loadCategories()
@@ -138,12 +140,9 @@ export default function CategoriasPage() {
     setSaving(deleteId)
     setError(null)
     try {
-      const { error: delErr } = await supabase
-        .from("categories")
-        .delete()
-        .eq("id", deleteId)
+      const result = await deleteCategory(deleteId)
 
-      if (delErr) throw delErr
+      if (!result.success) throw new Error(result.error)
 
       setDeleteId(null)
       await loadCategories()
