@@ -24,6 +24,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  toggleProductActive,
+  loadCategories,
+} from './actions'
 
 interface Product {
   id: string
@@ -38,10 +45,27 @@ interface Product {
   updated_at: string
 }
 
+interface Category {
+  id: string
+  label: string
+  slug: string
+}
+
+const defaultForm = {
+  name: '',
+  price: 0,
+  description: '',
+  image: '',
+  active: true,
+  category_id: '',
+  order_index: 0,
+}
+
 export default function ProductsPage() {
   const supabase = createClient()
 
   const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [isOpen, setIsOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
@@ -52,326 +76,247 @@ export default function ProductsPage() {
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
+  const [uploadingImage, setUploadingImage] = useState(false)
 
-  const [form, setForm] = useState({
-    name: '',
-    price: 0,
-    description: '',
-    image: '',
-    active: true,
-    category_id: '1',
-    order_index: 0,
-  })
+  const [form, setForm] = useState(defaultForm)
 
-  // Cargar productos
-  const loadProducts = async () => {
+  // Load products (reads are allowed via anon key SELECT policy)
+  const fetchProducts = async () => {
     try {
-      console.log('[ADMIN] Cargando productos...')
       setLoading(true)
       setError('')
 
       const { data, error: err } = await supabase
         .from('products')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('order_index', { ascending: true })
 
-      if (err) {
-        console.error('[ADMIN] Error en query:', err)
-        throw err
-      }
-
-      console.log('[ADMIN] Productos cargados:', data?.length)
-      setProducts(data || [])
+      if (err) throw err
+      setProducts(data ?? [])
     } catch (err: any) {
-      console.error('[ADMIN] Error al cargar:', err)
-      setError(`Error: ${err.message}`)
+      setError(`Error al cargar productos: ${err.message}`)
     } finally {
       setLoading(false)
     }
   }
 
+  // Load categories using admin client via server action
+  const fetchCategories = async () => {
+    const result = await loadCategories()
+    if (result.success) {
+      setCategories(result.data)
+    }
+  }
+
   useEffect(() => {
-    loadProducts()
+    fetchProducts()
+    fetchCategories()
   }, [])
 
   const openCreate = () => {
-    console.log('[ADMIN] Abriendo crear nuevo')
-    setForm({
-      name: '',
-      price: 0,
-      description: '',
-      image: '',
-      active: true,
-      category_id: '1',
-      order_index: products.length,
-    })
+    const firstCategoryId = categories[0]?.id ?? ''
+    setForm({ ...defaultForm, order_index: products.length, category_id: firstCategoryId })
     setEditingProduct(null)
     setIsCreating(true)
     setIsOpen(true)
     setError('')
+    setSuccess('')
   }
 
   const openEdit = (product: Product) => {
-    console.log('[ADMIN] Editando producto:', product.id)
-    setForm(product)
+    setForm({
+      name: product.name,
+      price: product.price,
+      description: product.description,
+      image: product.image,
+      active: product.active,
+      category_id: product.category_id,
+      order_index: product.order_index,
+    })
     setEditingProduct(product)
     setIsCreating(false)
     setIsOpen(true)
     setError('')
+    setSuccess('')
   }
 
   const handleSave = async () => {
-    try {
-      console.log('[ADMIN] Guardando producto...', { isCreating, form })
-      setSaving(true)
-      setError('')
-      setSuccess('')
+    setSaving(true)
+    setError('')
+    setSuccess('')
 
-      if (!form.name.trim()) {
-        throw new Error('Nombre requerido')
-      }
+    const result = isCreating
+      ? await createProduct(form)
+      : await updateProduct(editingProduct!.id, form)
 
-      if (!form.image.trim()) {
-        throw new Error('Imagen requerida')
-      }
+    setSaving(false)
 
-      if (isCreating) {
-        console.log('[ADMIN] Creando nuevo producto...')
-        const newProduct = {
-          id: crypto.randomUUID(),
-          name: form.name,
-          price: Number(form.price),
-          description: form.description,
-          image: form.image,
-          active: form.active,
-          category_id: form.category_id,
-          order_index: form.order_index,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }
-
-        const { data, error: err } = await supabase
-          .from('products')
-          .insert([newProduct])
-          .select()
-
-        if (err) {
-          console.error('[ADMIN] Error insert:', err)
-          throw err
-        }
-        console.log('[ADMIN] Producto creado:', data)
-        setSuccess('Producto creado correctamente')
-      } else if (editingProduct) {
-        console.log('[ADMIN] Actualizando producto:', editingProduct.id)
-        const { data, error: err } = await supabase
-          .from('products')
-          .update({
-            name: form.name,
-            price: Number(form.price),
-            description: form.description,
-            image: form.image,
-            active: form.active,
-            order_index: form.order_index,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', editingProduct.id)
-          .select()
-
-        if (err) {
-          console.error('[ADMIN] Error update:', err)
-          throw err
-        }
-        console.log('[ADMIN] Producto actualizado:', data)
-        setSuccess('Producto actualizado correctamente')
-      }
-
-      setIsOpen(false)
-      await loadProducts()
-    } catch (err: any) {
-      console.error('[ADMIN] Error:', err)
-      setError(err.message || 'Error desconocido')
-    } finally {
-      setSaving(false)
+    if (!result.success) {
+      setError(result.error ?? 'Error desconocido')
+      return
     }
+
+    setSuccess(isCreating ? 'Producto creado correctamente' : 'Producto actualizado correctamente')
+    setIsOpen(false)
+    await fetchProducts()
   }
 
   const handleDelete = async () => {
     if (!deleteId) return
-    try {
-      console.log('[ADMIN] Eliminando:', deleteId)
-      setDeleting(true)
-      setError('')
+    setDeleting(true)
+    setError('')
 
-      const { error: err } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', deleteId)
+    const result = await deleteProduct(deleteId)
 
-      if (err) {
-        console.error('[ADMIN] Error delete:', err)
-        throw err
-      }
+    setDeleting(false)
 
-      console.log('[ADMIN] Producto eliminado')
-      setSuccess('Producto eliminado')
+    if (!result.success) {
+      setError(result.error ?? 'Error al eliminar')
       setDeleteId(null)
-      await loadProducts()
-    } catch (err: any) {
-      console.error('[ADMIN] Error:', err)
-      setError(err.message || 'Error al eliminar')
-    } finally {
-      setDeleting(false)
+      return
     }
+
+    setSuccess('Producto eliminado')
+    setDeleteId(null)
+    await fetchProducts()
   }
 
-  const toggleActive = async (product: Product) => {
-    try {
-      console.log('[ADMIN] Toggling active:', product.id)
-      const { error: err } = await supabase
-        .from('products')
-        .update({ active: !product.active })
-        .eq('id', product.id)
-
-      if (err) throw err
-      await loadProducts()
-    } catch (err: any) {
-      setError(err.message)
+  const handleToggleActive = async (product: Product) => {
+    const result = await toggleProductActive(product.id, !product.active)
+    if (!result.success) {
+      setError(result.error ?? 'Error al cambiar estado')
+      return
     }
+    await fetchProducts()
+  }
+
+  const getCategoryLabel = (categoryId: string) => {
+    return categories.find((c) => c.id === categoryId)?.label ?? '—'
   }
 
   const filtered = products.filter(
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.description.toLowerCase().includes(search.toLowerCase())
+      p.description?.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
-    <div className='flex flex-col gap-6 max-w-7xl'>
+    <div className="flex flex-col gap-6 max-w-7xl">
       {/* Header */}
-      <div className='flex items-center justify-between'>
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className='text-3xl font-bold text-admin-text'>Productos</h1>
-          <p className='text-sm text-admin-muted mt-1'>
+          <h1 className="text-3xl font-bold text-admin-text">Productos</h1>
+          <p className="text-sm text-admin-muted mt-1">
             {products.length} producto{products.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <Button onClick={openCreate} className='bg-primary hover:bg-primary/90 text-white'>
-          <Plus className='w-4 h-4 mr-2' />
+        <Button onClick={openCreate} className="bg-primary hover:bg-primary/90 text-white">
+          <Plus className="w-4 h-4 mr-2" />
           Nuevo Producto
         </Button>
       </div>
 
-      {/* Mensajes */}
+      {/* Feedback */}
       {success && (
-        <div className='p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3 text-green-800'>
-          <CheckCircle className='w-5 h-5 flex-shrink-0' />
-          <p className='text-sm font-medium'>{success}</p>
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3 text-green-800">
+          <CheckCircle className="w-5 h-5 flex-shrink-0" />
+          <p className="text-sm font-medium">{success}</p>
         </div>
       )}
-
       {error && (
-        <div className='p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-800'>
-          <AlertCircle className='w-5 h-5 flex-shrink-0' />
-          <p className='text-sm font-medium'>{error}</p>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-800">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <p className="text-sm font-medium">{error}</p>
         </div>
       )}
 
       {/* Search */}
       <Input
-        placeholder='Buscar productos...'
+        placeholder="Buscar productos..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className='bg-white border-admin-border'
+        className="bg-white border-admin-border"
       />
 
       {/* Loading */}
       {loading && (
-        <div className='flex items-center justify-center py-12'>
-          <Loader2 className='w-8 h-8 animate-spin text-admin-muted' />
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-admin-muted" />
         </div>
       )}
 
-      {/* Tabla */}
+      {/* Table */}
       {!loading && (
-        <div className='border border-admin-border rounded-lg overflow-hidden bg-white'>
-          <div className='overflow-x-auto'>
-            <table className='w-full text-sm'>
+        <div className="border border-admin-border rounded-lg overflow-hidden bg-white">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
               <thead>
-                <tr className='border-b border-admin-border bg-admin-bg'>
-                  <th className='px-4 py-3 text-left font-semibold text-admin-text'>Imagen</th>
-                  <th className='px-4 py-3 text-left font-semibold text-admin-text'>Nombre</th>
-                  <th className='px-4 py-3 text-left font-semibold text-admin-text'>Descripción</th>
-                  <th className='px-4 py-3 text-left font-semibold text-admin-text'>Precio</th>
-                  <th className='px-4 py-3 text-left font-semibold text-admin-text'>Estado</th>
-                  <th className='px-4 py-3 text-right font-semibold text-admin-text'>Acciones</th>
+                <tr className="border-b border-admin-border bg-admin-bg">
+                  <th className="px-4 py-3 text-left font-semibold text-admin-text">Imagen</th>
+                  <th className="px-4 py-3 text-left font-semibold text-admin-text">Nombre</th>
+                  <th className="px-4 py-3 text-left font-semibold text-admin-text">Categoría</th>
+                  <th className="px-4 py-3 text-left font-semibold text-admin-text">Precio</th>
+                  <th className="px-4 py-3 text-left font-semibold text-admin-text">Estado</th>
+                  <th className="px-4 py-3 text-right font-semibold text-admin-text">Acciones</th>
                 </tr>
               </thead>
-              <tbody className='divide-y divide-admin-border'>
+              <tbody className="divide-y divide-admin-border">
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className='px-4 py-8 text-center text-admin-muted'>
-                      {products.length === 0 ? 'No hay productos' : 'No se encontraron resultados'}
+                    <td colSpan={6} className="px-4 py-8 text-center text-admin-muted">
+                      {products.length === 0 ? 'No hay productos' : 'Sin resultados'}
                     </td>
                   </tr>
                 ) : (
                   filtered.map((product) => (
-                    <tr key={product.id} className='hover:bg-admin-bg/50 transition-colors'>
-                      {/* Imagen */}
-                      <td className='px-4 py-3'>
+                    <tr key={product.id} className="hover:bg-admin-bg/50 transition-colors">
+                      <td className="px-4 py-3">
                         {product.image ? (
-                          <div className='relative w-10 h-10 rounded-md overflow-hidden bg-admin-bg'>
+                          <div className="relative w-10 h-10 rounded-md overflow-hidden bg-admin-bg">
                             <Image
                               src={product.image}
                               alt={product.name}
                               fill
-                              className='object-cover'
+                              className="object-cover"
                               unoptimized
                             />
                           </div>
                         ) : (
-                          <div className='w-10 h-10 rounded-md bg-admin-bg' />
+                          <div className="w-10 h-10 rounded-md bg-admin-bg" />
                         )}
                       </td>
-
-                      {/* Nombre */}
-                      <td className='px-4 py-3 font-medium text-admin-text'>{product.name}</td>
-
-                      {/* Descripción */}
-                      <td className='px-4 py-3 text-admin-muted line-clamp-2'>
-                        {product.description}
+                      <td className="px-4 py-3 font-medium text-admin-text">{product.name}</td>
+                      <td className="px-4 py-3 text-admin-muted">
+                        {getCategoryLabel(product.category_id)}
                       </td>
-
-                      {/* Precio */}
-                      <td className='px-4 py-3 text-admin-text'>${product.price.toFixed(2)}</td>
-
-                      {/* Estado */}
-                      <td className='px-4 py-3'>
+                      <td className="px-4 py-3 text-admin-text">
+                        ${Number(product.price).toLocaleString('es-AR')}
+                      </td>
+                      <td className="px-4 py-3">
                         <button
-                          onClick={() => toggleActive(product)}
+                          onClick={() => handleToggleActive(product)}
                           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                             product.active
                               ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}
                         >
                           {product.active ? 'Activo' : 'Inactivo'}
                         </button>
                       </td>
-
-                      {/* Acciones */}
-                      <td className='px-4 py-3 text-right'>
-                        <div className='flex items-center justify-end gap-2'>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => openEdit(product)}
-                            className='p-2 rounded-lg hover:bg-blue-100 text-blue-600 transition-colors'
+                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
                           >
-                            <Pencil className='w-4 h-4' />
+                            <Pencil className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => setDeleteId(product.id)}
-                            className='p-2 rounded-lg hover:bg-red-100 text-red-600 transition-colors'
+                            className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
                           >
-                            <Trash2 className='w-4 h-4' />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -384,148 +329,182 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* Dialog Crear/Editar */}
+      {/* Create / Edit Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className='max-w-lg bg-white max-h-[90vh] overflow-y-auto'>
+        <DialogContent className="max-w-lg bg-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className='text-admin-text'>
-              {isCreating ? 'Crear Nuevo Producto' : 'Editar Producto'}
+            <DialogTitle className="text-admin-text">
+              {isCreating ? 'Nuevo Producto' : 'Editar Producto'}
             </DialogTitle>
           </DialogHeader>
 
-          <div className='space-y-4'>
-            {/* Nombre */}
+          <div className="space-y-4">
+            {/* Name */}
             <div>
-              <label className='block text-sm font-medium text-admin-text mb-1'>
-                Nombre *
-              </label>
+              <label className="block text-sm font-medium text-admin-text mb-1">Nombre *</label>
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder='Ej: Pizza Margarita'
-                className='bg-white border-admin-border'
+                placeholder="Ej: Pizza Margarita"
+                className="bg-white border-admin-border"
               />
             </div>
 
-            {/* Precio */}
+            {/* Category */}
             <div>
-              <label className='block text-sm font-medium text-admin-text mb-1'>Precio</label>
+              <label className="block text-sm font-medium text-admin-text mb-1">Categoría *</label>
+              <select
+                value={form.category_id}
+                onChange={(e) => setForm({ ...form, category_id: e.target.value })}
+                className="w-full rounded-md border border-admin-border bg-white px-3 py-2 text-sm text-admin-text focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="" disabled>
+                  Seleccionar categoría
+                </option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Price */}
+            <div>
+              <label className="block text-sm font-medium text-admin-text mb-1">Precio</label>
               <Input
-                type='number'
+                type="number"
                 value={form.price}
-                onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) })}
-                placeholder='0.00'
-                step='0.01'
-                className='bg-white border-admin-border'
+                onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })}
+                placeholder="0"
+                step="1"
+                min="0"
+                className="bg-white border-admin-border"
               />
             </div>
 
-            {/* Descripción */}
+            {/* Description */}
             <div>
-              <label className='block text-sm font-medium text-admin-text mb-1'>Descripción</label>
+              <label className="block text-sm font-medium text-admin-text mb-1">Descripción</label>
               <Textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder='Describe el producto...'
+                placeholder="Describe el producto..."
                 rows={3}
-                className='bg-white border-admin-border'
+                className="bg-white border-admin-border"
               />
             </div>
 
-            {/* Imagen */}
+            {/* Image URL */}
             <div>
-              <label className='block text-sm font-medium text-admin-text mb-1'>
+              <label className="block text-sm font-medium text-admin-text mb-1">
                 Imagen URL *
               </label>
               <Input
                 value={form.image}
                 onChange={(e) => setForm({ ...form, image: e.target.value })}
-                placeholder='https://ejemplo.com/imagen.jpg'
-                className='bg-white border-admin-border'
+                placeholder="https://ejemplo.com/imagen.jpg"
+                className="bg-white border-admin-border"
               />
               {form.image && (
-                <div className='mt-2 relative w-full h-32 rounded-lg overflow-hidden bg-admin-bg border border-admin-border'>
+                <div className="mt-2 relative w-full h-32 rounded-lg overflow-hidden bg-admin-bg border border-admin-border">
                   <Image
                     src={form.image}
-                    alt='Preview'
+                    alt="Preview"
                     fill
-                    className='object-cover'
+                    className="object-cover"
                     unoptimized
                   />
                 </div>
               )}
             </div>
 
-            {/* Upload de archivo */}
+            {/* File upload */}
             <div>
-              <label className='block text-sm font-medium text-admin-text mb-2'>
+              <label className="block text-sm font-medium text-admin-text mb-2">
                 O sube desde tu PC
               </label>
-              <div className='border-2 border-dashed border-admin-border rounded-lg p-6 text-center hover:border-primary transition-colors'>
+              <div className="border-2 border-dashed border-admin-border rounded-lg p-6 text-center hover:border-primary transition-colors">
                 <input
-                  type='file'
-                  accept='image/*'
-                  className='hidden'
-                  id='image-upload'
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  id="image-upload"
                   onChange={async (e) => {
                     const file = e.target.files?.[0]
                     if (!file) return
-
                     try {
-                      console.log('[ADMIN] Subiendo imagen:', file.name)
+                      setUploadingImage(true)
                       const formData = new FormData()
                       formData.append('file', file)
-
-                      const res = await fetch('/api/upload', {
-                        method: 'POST',
-                        body: formData,
-                      })
-
+                      const res = await fetch('/api/upload', { method: 'POST', body: formData })
                       const data = await res.json()
                       if (data.error) throw new Error(data.error)
-
-                      console.log('[ADMIN] Imagen subida:', data.url)
-                      setForm({ ...form, image: data.url })
+                      setForm((prev) => ({ ...prev, image: data.url }))
                     } catch (err: any) {
                       setError(err.message)
+                    } finally {
+                      setUploadingImage(false)
                     }
                   }}
                 />
-                <label htmlFor='image-upload' className='cursor-pointer'>
-                  <p className='text-sm font-medium text-admin-text'>Haz click para subir</p>
-                  <p className='text-xs text-admin-muted mt-1'>PNG, JPG, GIF (máx 10MB)</p>
+                <label htmlFor="image-upload" className="cursor-pointer">
+                  {uploadingImage ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-admin-muted mx-auto" />
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-admin-text">Haz click para subir</p>
+                      <p className="text-xs text-admin-muted mt-1">PNG, JPG, WEBP (max 10MB)</p>
+                    </>
+                  )}
                 </label>
               </div>
             </div>
 
-            {/* Activo */}
-            <div className='flex items-center gap-3'>
+            {/* Order index */}
+            <div>
+              <label className="block text-sm font-medium text-admin-text mb-1">Orden</label>
+              <Input
+                type="number"
+                value={form.order_index}
+                onChange={(e) => setForm({ ...form, order_index: parseInt(e.target.value) || 0 })}
+                min="0"
+                className="bg-white border-admin-border"
+              />
+            </div>
+
+            {/* Active */}
+            <div className="flex items-center gap-3">
               <input
-                type='checkbox'
-                id='active'
+                type="checkbox"
+                id="active"
                 checked={form.active}
                 onChange={(e) => setForm({ ...form, active: e.target.checked })}
-                className='w-4 h-4 rounded border-admin-border'
+                className="w-4 h-4 rounded border-admin-border"
               />
-              <label htmlFor='active' className='text-sm font-medium text-admin-text cursor-pointer'>
+              <label htmlFor="active" className="text-sm font-medium text-admin-text cursor-pointer">
                 Mostrar en tienda
               </label>
             </div>
           </div>
 
-          <DialogFooter className='gap-2 mt-6'>
+          <DialogFooter className="gap-2 mt-6">
             <Button
-              variant='outline'
+              variant="outline"
               onClick={() => setIsOpen(false)}
               disabled={saving}
-              className='border-admin-border'
+              className="border-admin-border"
             >
               Cancelar
             </Button>
-            <Button onClick={handleSave} disabled={saving} className='bg-primary hover:bg-primary/90'>
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="bg-primary hover:bg-primary/90"
+            >
               {saving ? (
                 <>
-                  <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Guardando...
                 </>
               ) : isCreating ? (
@@ -540,21 +519,21 @@ export default function ProductsPage() {
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent className='bg-white'>
+        <AlertDialogContent className="bg-white">
           <AlertDialogHeader>
-            <AlertDialogTitle className='text-admin-text'>Eliminar producto</AlertDialogTitle>
-            <AlertDialogDescription className='text-admin-muted'>
+            <AlertDialogTitle className="text-admin-text">Eliminar producto</AlertDialogTitle>
+            <AlertDialogDescription className="text-admin-muted">
               Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className='border-admin-border'>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="border-admin-border">Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleting}
-              className='bg-red-500 hover:bg-red-600'
+              className="bg-red-500 hover:bg-red-600"
             >
-              {deleting ? <Loader2 className='w-4 h-4 animate-spin' /> : 'Eliminar'}
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Eliminar'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

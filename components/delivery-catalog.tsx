@@ -7,11 +7,11 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/lib/cart-context"
 import { useStore } from "@/lib/store"
-import { categories as staticCategories, type CategoryId, type Product } from "@/lib/products"
+import { type Product } from "@/lib/products"
 
 export function DeliveryCatalog() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeCategory, setActiveCategory] = useState<CategoryId>("todas")
+  const [activeCategory, setActiveCategory] = useState<string>("todas")
   const { addItem, setIsCartOpen, totalItems } = useCart()
   const { products: storeProducts, categories: storeCategories } = useStore()
 
@@ -33,7 +33,7 @@ export function DeliveryCatalog() {
     })
   }, [searchQuery, activeCategory, products])
 
-  // Group by category dynamically
+  // Group products by category_id (UUID) — fully dynamic, no hardcoded slugs
   const grouped = useMemo(() => {
     const map: Record<string, typeof products> = {}
     for (const p of filteredProducts) {
@@ -42,9 +42,6 @@ export function DeliveryCatalog() {
     }
     return map
   }, [filteredProducts])
-
-  const pizzas = grouped["pizzas"] ?? []
-  const bebidas = grouped["bebidas"] ?? []
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("es-AR", {
@@ -119,47 +116,34 @@ export function DeliveryCatalog() {
           </Button>
         </div>
 
-        {/* Products Grid */}
+        {/* Products Grid — one section per category, driven by real DB categories */}
         <div className="mt-8 space-y-12">
-          {/* Pizzas Section */}
-          {(activeCategory === "todas" || activeCategory === "pizzas") &&
-            pizzas.length > 0 && (
-              <div>
-                <h2 className="font-serif text-2xl font-bold text-foreground mb-6">
-                  Pizzas
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {pizzas.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      onAdd={() => handleAddItem(product)}
-                      formatPrice={formatPrice}
-                    />
-                  ))}
+          {storeCategories
+            .filter(
+              (cat) =>
+                activeCategory === "todas" || activeCategory === cat.id
+            )
+            .map((cat) => {
+              const catProducts = grouped[cat.id] ?? []
+              if (catProducts.length === 0) return null
+              return (
+                <div key={cat.id}>
+                  <h2 className="font-serif text-2xl font-bold text-foreground mb-6">
+                    {cat.label}
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {catProducts.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        onAdd={() => handleAddItem(product)}
+                        formatPrice={formatPrice}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-
-          {/* Bebidas Section */}
-          {(activeCategory === "todas" || activeCategory === "bebidas") &&
-            bebidas.length > 0 && (
-              <div>
-                <h2 className="font-serif text-2xl font-bold text-foreground mb-6">
-                  Bebidas
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {bebidas.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      onAdd={() => handleAddItem(product)}
-                      formatPrice={formatPrice}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+              )
+            })}
 
           {/* No Results */}
           {filteredProducts.length === 0 && (
