@@ -1,7 +1,6 @@
 import { RealtimeBanner } from "@/components/realtime-banner"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { ContactForm } from "@/components/contact-form"
 import { MessageCircle, Instagram, MapPin, Clock } from "lucide-react"
 
 export const metadata = {
@@ -78,54 +77,7 @@ export default function ContactPage() {
                 Completá el formulario y te responderemos a la brevedad.
               </p>
 
-              <form className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Nombre <span className="text-primary">*</span>
-                  </label>
-                  <Input
-                    placeholder="Tu nombre"
-                    className="bg-background border-border focus:border-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Email <span className="text-primary">*</span>
-                  </label>
-                  <Input
-                    type="email"
-                    placeholder="tu@email.com"
-                    className="bg-background border-border focus:border-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Teléfono
-                  </label>
-                  <Input
-                    type="tel"
-                    placeholder="11 1234-5678"
-                    className="bg-background border-border focus:border-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Mensaje <span className="text-primary">*</span>
-                  </label>
-                  <Textarea
-                    placeholder="Tu mensaje..."
-                    rows={5}
-                    className="bg-background border-border focus:border-primary resize-none"
-                  />
-                </div>
-
-                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 font-medium">
-                  Enviar mensaje
-                </Button>
-              </form>
+              <ContactForm />
             </div>
           </div>
         </div>
