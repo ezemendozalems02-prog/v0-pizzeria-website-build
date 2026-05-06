@@ -433,18 +433,46 @@ export default function ProductsPage() {
                   onChange={async (e) => {
                     const file = e.target.files?.[0]
                     if (!file) return
+
+                    // Validar antes de enviar
+                    if (!file.type.startsWith('image/')) {
+                      setError('Solo se permiten imágenes (JPG, PNG, WebP, GIF).')
+                      return
+                    }
+                    if (file.size > 10 * 1024 * 1024) {
+                      setError('La imagen no puede superar 10 MB.')
+                      return
+                    }
+
                     try {
                       setUploadingImage(true)
-                      const formData = new FormData()
-                      formData.append('file', file)
-                      const res = await fetch('/api/upload', { method: 'POST', body: formData })
-                      const data = await res.json()
-                      if (data.error) throw new Error(data.error)
+                      setError('')
+                      const fd = new FormData()
+                      fd.append('file', file)
+                      fd.append('folder', 'products')
+
+                      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+
+                      // Leer como texto primero para evitar el error de JSON inválido
+                      const text = await res.text()
+                      let data: any
+                      try {
+                        data = JSON.parse(text)
+                      } catch {
+                        throw new Error(`Error del servidor: ${text.slice(0, 120)}`)
+                      }
+
+                      if (!res.ok || data.error) {
+                        throw new Error(data.error ?? `Error ${res.status}`)
+                      }
+
                       setForm((prev) => ({ ...prev, image: data.url }))
                     } catch (err: any) {
-                      setError(err.message)
+                      setError(err.message ?? 'Error al subir la imagen.')
                     } finally {
                       setUploadingImage(false)
+                      // reset input para permitir volver a seleccionar el mismo archivo
+                      e.target.value = ''
                     }
                   }}
                 />
