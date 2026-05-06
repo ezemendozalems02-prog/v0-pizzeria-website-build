@@ -17,9 +17,16 @@ export function DeliveryCatalog() {
 
   // Use active products from store, fall back gracefully
   const products = storeProducts.filter((p) => p.active)
+  // Sort: bebidas siempre al final, resto en orden alfabético
+  const sortedStoreCategories = [...storeCategories].sort((a, b) => {
+    if (a.slug === "bebidas") return 1
+    if (b.slug === "bebidas") return -1
+    return a.label.localeCompare(b.label, "es")
+  })
+
   const categories = [
-    { id: "todas", label: "Todas" },
-    ...storeCategories,
+    { id: "todas", label: "Todas", slug: "todas" },
+    ...sortedStoreCategories,
   ]
 
   const filteredProducts = useMemo(() => {
@@ -118,7 +125,7 @@ export function DeliveryCatalog() {
 
         {/* Products Grid — one section per category, driven by real DB categories */}
         <div className="mt-8 space-y-12">
-          {storeCategories
+          {sortedStoreCategories
             .filter(
               (cat) =>
                 activeCategory === "todas" || activeCategory === cat.id
