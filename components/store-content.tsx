@@ -5,9 +5,11 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { MapPin, Clock, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useBannersContext } from '@/components/banners-provider'
 
 export function StoreContent() {
   const { content } = useStore()
+  const { getBanner } = useBannersContext()
 
   return (
     <>
@@ -38,13 +40,13 @@ export function StoreContent() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FeaturedBanner
-              image="/images/favorites-banner.jpg"
+              image={getBanner('favorites')?.image_url ?? '/images/favorites-banner.jpg'}
               title="PIZZAS"
               subtitle="12 sabores de pizza"
               href="/pedido-delivery"
             />
             <FeaturedBanner
-              image="/images/promos-banner.jpg"
+              image={getBanner('promos')?.image_url ?? '/images/promos-banner.jpg'}
               title="NO-PIZZAS"
               subtitle="Bebidas & postres"
               href="/pedido-delivery"
