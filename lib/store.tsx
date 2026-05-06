@@ -74,7 +74,7 @@ const initialBanners: Banner[] = [
   },
   {
     id: "favoritas",
-    title: "Favoritas del barrio",
+    title: "PIZZAS",
     subtitle: "",
     buttonText: "Ver Menú",
     buttonLink: "/pedido-delivery",
@@ -82,7 +82,7 @@ const initialBanners: Banner[] = [
   },
   {
     id: "promos",
-    title: "Promos Totore",
+    title: "NO-PIZZAS",
     subtitle: "",
     buttonText: "Ver Menú",
     buttonLink: "/pedido-delivery",

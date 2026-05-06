@@ -39,13 +39,13 @@ export function StoreContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FeaturedBanner
               image="/images/favorites-banner.jpg"
-              title="Favoritas del barrio"
+              title="PIZZAS"
               subtitle="12 sabores de pizza"
               href="/pedido-delivery"
             />
             <FeaturedBanner
               image="/images/promos-banner.jpg"
-              title="Promos Totore"
+              title="NO-PIZZAS"
               subtitle="Bebidas & postres"
               href="/pedido-delivery"
             />
