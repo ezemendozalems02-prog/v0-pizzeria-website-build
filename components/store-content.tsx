@@ -160,7 +160,7 @@ function FeaturedBanner({
           src={image}
           alt={title}
           fill
-          className="object-contain transition-transform duration-500 group-hover:scale-105 bg-muted"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 via-secondary/20 to-transparent" />
