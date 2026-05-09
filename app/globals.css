@@ -49,14 +49,6 @@
   font-display: swap;
 }
 
-@font-face {
-  font-family: 'Dawning of a New Day';
-  src: url('/fonts/DawningOfANewDay.woff2') format('woff2'),
-       url('/fonts/DawningOfANewDay.woff') format('woff');
-  font-weight: 400;
-  font-display: swap;
-}
-
 @theme inline {
   /* Open Sans — body text, párrafos, descripciones */
   --font-sans: 'Open Sans', 'Open Sans Fallback', sans-serif;
@@ -64,8 +56,8 @@
   --font-serif: 'Wellbutrin', 'Georgia', serif;
   /* Bricolage Grotesque — nav, botones, labels, UI, subtítulos */
   --font-display: 'Bricolage Grotesque', 'Bricolage Grotesque Fallback', sans-serif;
-  /* Dawning of a New Day — acento caligráfico, taglines, quotes */
-  --font-accent: 'Dawning of a New Day', 'Brush Script MT', cursive;
+  /* Orbitron — acento futurista/robótico, taglines, frases destacadas */
+  --font-accent: 'Orbitron', 'Orbitron Fallback', sans-serif;
   --font-mono: 'Geist Mono', 'Geist Mono Fallback', monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -143,9 +135,11 @@
     letter-spacing: 0.01em;
   }
 
-  /* Clase utilitaria para acento caligráfico */
+  /* Clase utilitaria para acento futurista — Orbitron */
   .font-accent {
     font-family: var(--font-accent);
+    letter-spacing: 0.05em;
+    font-weight: 700;
   }
 
   /* Clase para forzar display font en cualquier elemento */

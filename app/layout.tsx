@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Open_Sans, Bricolage_Grotesque } from 'next/font/google'
+import { Open_Sans, Bricolage_Grotesque, Orbitron } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { CartProvider } from '@/lib/cart-context'
 import { StoreProvider } from '@/lib/store'
@@ -22,6 +22,14 @@ const bricolage = Bricolage_Grotesque({
   subsets: ['latin'],
   variable: '--font-display',
   display: 'swap',
+})
+
+// Acento futurista/robótico — taglines, frases destacadas
+const orbitron = Orbitron({
+  subsets: ['latin'],
+  variable: '--font-accent',
+  display: 'swap',
+  weight: ['400', '500', '700', '900'],
 })
 
 export const metadata: Metadata = {
@@ -62,7 +70,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${openSans.variable} ${bricolage.variable} font-sans antialiased`}>
+      <body className={`${openSans.variable} ${bricolage.variable} ${orbitron.variable} font-sans antialiased`}>
         <BannersProvider>
           <StoreProvider>
             <CartProvider>
