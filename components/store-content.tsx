@@ -16,7 +16,7 @@ export function StoreContent() {
       {/* Experience Section */}
       <section className="py-20 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-center text-foreground mb-12">
+          <h2 className="font-accent text-4xl sm:text-5xl font-normal text-center text-foreground mb-12 tracking-wide">
             {content.experienceTitle}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -35,7 +35,7 @@ export function StoreContent() {
       {/* Featured Section */}
       <section className="py-20 bg-muted">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-center text-foreground mb-12">
+          <h2 className="font-accent text-4xl sm:text-5xl font-normal text-center text-foreground mb-12 tracking-wide">
             {content.uniqueTitle}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -58,7 +58,7 @@ export function StoreContent() {
       {/* Visit Us Section */}
       <section className="py-20 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-center text-foreground mb-12">
+          <h2 className="font-accent text-4xl sm:text-5xl font-normal text-center text-foreground mb-12 tracking-wide">
             {content.visitTitle}
           </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
@@ -133,7 +133,7 @@ function ExperienceCard({
         {icon}
       </div>
       <div>
-        <h3 className="font-serif text-xl font-semibold text-foreground mb-2">
+        <h3 className="font-display text-xl font-semibold text-foreground mb-2 tracking-tight">
           {title}
         </h3>
         <p className="text-muted-foreground text-sm">{description}</p>
@@ -165,7 +165,7 @@ function FeaturedBanner({
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 via-secondary/20 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-        <h3 className="font-serif text-lg sm:text-2xl font-bold text-primary-foreground mb-1 sm:mb-2">
+        <h3 className="font-display text-lg sm:text-2xl font-bold text-primary-foreground mb-1 sm:mb-2 tracking-widest uppercase">
           {title}
         </h3>
         {subtitle && (

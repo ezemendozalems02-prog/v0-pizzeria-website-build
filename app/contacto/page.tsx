@@ -26,7 +26,7 @@ export default function ContactPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Left Column - Contact Info */}
             <div>
-              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-foreground mb-4">
+              <h2 className="font-accent text-4xl sm:text-5xl font-normal text-foreground mb-4 tracking-wide">
                 Hablemos
               </h2>
               <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
@@ -70,7 +70,7 @@ export default function ContactPage() {
 
             {/* Right Column - Contact Form */}
             <div className="bg-muted rounded-xl p-8">
-              <h3 className="font-serif text-2xl font-bold text-foreground mb-2">
+              <h3 className="font-display text-2xl font-bold text-foreground mb-2 tracking-tight">
                 Envianos un mensaje
               </h3>
               <p className="text-muted-foreground mb-6">

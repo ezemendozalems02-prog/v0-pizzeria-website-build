@@ -40,9 +40,32 @@
   --sidebar-ring: oklch(0.5 0.18 25);
 }
 
+/* ── Custom fonts not available in next/font/google ──────────────────────── */
+@font-face {
+  font-family: 'Wellbutrin';
+  src: url('/fonts/Wellbutrin.woff2') format('woff2'),
+       url('/fonts/Wellbutrin.woff') format('woff');
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Dawning of a New Day';
+  src: url('/fonts/DawningOfANewDay.woff2') format('woff2'),
+       url('/fonts/DawningOfANewDay.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+}
+
 @theme inline {
-  --font-sans: 'Inter', 'Inter Fallback', sans-serif;
-  --font-serif: 'Playfair Display', 'Playfair Display Fallback', serif;
+  /* Open Sans — body text, párrafos, descripciones */
+  --font-sans: 'Open Sans', 'Open Sans Fallback', sans-serif;
+  /* Wellbutrin — h1/h2 hero, titulares grandes de sección */
+  --font-serif: 'Wellbutrin', 'Georgia', serif;
+  /* Bricolage Grotesque — nav, botones, labels, UI, subtítulos */
+  --font-display: 'Bricolage Grotesque', 'Bricolage Grotesque Fallback', sans-serif;
+  /* Dawning of a New Day — acento caligráfico, taglines, quotes */
+  --font-accent: 'Dawning of a New Day', 'Brush Script MT', cursive;
   --font-mono: 'Geist Mono', 'Geist Mono Fallback', monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -86,8 +109,48 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  /* Titulares grandes — Wellbutrin */
+  h1, h2 {
+    font-family: var(--font-serif);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  /* Subtítulos, secciones — Bricolage Grotesque */
+  h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  /* Párrafos y listas — Open Sans */
+  p, li, blockquote {
+    font-family: var(--font-sans);
+    line-height: 1.65;
+  }
+
+  /* Botones, nav, labels — Bricolage Grotesque */
+  button, [role="button"], nav, label, .btn {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+  }
+
+  /* Clase utilitaria para acento caligráfico */
+  .font-accent {
+    font-family: var(--font-accent);
+  }
+
+  /* Clase para forzar display font en cualquier elemento */
+  .font-display {
+    font-family: var(--font-display);
   }
 }
 

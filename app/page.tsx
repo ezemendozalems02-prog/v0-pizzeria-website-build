@@ -52,7 +52,7 @@ function ExperienceCard({
       <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
         {icon}
       </div>
-      <h3 className="font-serif text-xl font-semibold text-foreground mb-2">
+      <h3 className="font-display text-xl font-semibold text-foreground mb-2 tracking-tight">
         {title}
       </h3>
       <p className="text-muted-foreground leading-relaxed">
@@ -81,7 +81,7 @@ function FeaturedBanner({
       />
       <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-        <h3 className="font-serif text-lg sm:text-2xl font-bold text-primary-foreground mb-2 sm:mb-3">
+        <h3 className="font-display text-lg sm:text-2xl font-bold text-primary-foreground mb-2 sm:mb-3 tracking-widest uppercase">
           {title}
         </h3>
         <span className="inline-flex items-center text-xs sm:text-sm font-medium text-primary-foreground/90 group-hover:text-primary-foreground transition-colors">

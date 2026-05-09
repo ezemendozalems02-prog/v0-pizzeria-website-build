@@ -28,7 +28,7 @@ export default function AboutPage() {
               <span className="inline-block text-sm font-semibold tracking-wide text-primary mb-4">
                 NUESTRA HISTORIA
               </span>
-              <h2 className="font-serif text-4xl sm:text-5xl font-bold text-foreground mb-6 leading-tight">
+              <h2 className="font-serif text-4xl sm:text-5xl font-bold text-foreground mb-6 leading-tight tracking-tight">
                 Una pasión por la cocina fresca
               </h2>
               <p className="text-muted-foreground text-lg leading-relaxed mb-4">
@@ -67,7 +67,7 @@ export default function AboutPage() {
             <span className="inline-block text-sm font-semibold tracking-wide text-primary mb-4">
               NUESTROS VALORES
             </span>
-            <h2 className="font-serif text-4xl sm:text-5xl font-bold text-foreground mb-4">
+            <h2 className="font-accent text-4xl sm:text-5xl font-normal text-foreground mb-4 tracking-wide">
               Lo que nos define
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
@@ -117,7 +117,7 @@ function ValueCard({
       <div className="w-12 h-12 rounded-lg bg-primary/8 flex items-center justify-center text-primary mb-5 group-hover:bg-primary/15 transition-colors">
         {icon}
       </div>
-      <h3 className="font-serif text-xl font-semibold text-foreground mb-3">
+      <h3 className="font-display text-xl font-semibold text-foreground mb-3 tracking-tight">
         {title}
       </h3>
       <p className="text-muted-foreground text-sm leading-relaxed">
