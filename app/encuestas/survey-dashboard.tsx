@@ -236,7 +236,8 @@ export function SurveyDashboard() {
   const [filterTime,      setFilterTime]      = useState('all')
   const [filterAttention, setFilterAttention] = useState('all')
   const [filterComment,   setFilterComment]   = useState('')
-  const [dateExact,       setDateExact]       = useState('')
+  const [startDate,       setStartDate]       = useState('')
+  const [endDate,         setEndDate]         = useState('')
   const [sortBy,          setSortBy]          = useState<SortOption>('recent')
 
   const load = async () => {
@@ -281,14 +282,21 @@ export function SurveyDashboard() {
     if (filterTime      !== 'all') list = list.filter((r) => r.delivery_time     === filterTime)
     if (filterAttention !== 'all') list = list.filter((r) => r.service_attention === filterAttention)
     if (filterComment) list = list.filter((r) => r.comment?.toLowerCase().includes(filterComment.toLowerCase()))
-    if (dateExact) list = list.filter((r) => fmt(r.created_at) === fmt(dateExact + 'T00:00:00'))
+    if (startDate) {
+      const from = new Date(startDate + 'T00:00:00')
+      list = list.filter((r) => new Date(r.created_at) >= from)
+    }
+    if (endDate) {
+      const to = new Date(endDate + 'T23:59:59')
+      list = list.filter((r) => new Date(r.created_at) <= to)
+    }
     if (sortBy === 'best')  list.sort((a, b) => avgScore(b) - avgScore(a))
     if (sortBy === 'worst') list.sort((a, b) => avgScore(a) - avgScore(b))
     return list
-  }, [timeFiltered, filterOrigin, filterQuality, filterTime, filterAttention, filterComment, dateExact, sortBy])
+  }, [timeFiltered, filterOrigin, filterQuality, filterTime, filterAttention, filterComment, startDate, endDate, sortBy])
 
   const hasFilters = filterOrigin !== 'all' || filterQuality !== 'all' || filterTime !== 'all' ||
-    filterAttention !== 'all' || filterComment || dateExact || sortBy !== 'recent'
+    filterAttention !== 'all' || filterComment || startDate || endDate || sortBy !== 'recent'
 
   const RATING_OPTIONS = [
     { value: 'all', label: 'Todas' },
@@ -402,8 +410,22 @@ export function SurveyDashboard() {
             <FSelect label="Tiempo entrega" value={filterTime}      onChange={setFilterTime}      options={RATING_OPTIONS} />
             <FSelect label="Atención"       value={filterAttention} onChange={setFilterAttention} options={RATING_OPTIONS} />
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#243329]/40">Fecha exacta</label>
-              <input type="date" value={dateExact} onChange={(e) => setDateExact(e.target.value)}
+              <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#243329]/40">Fecha desde</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                max={endDate || undefined}
+                className="h-9 px-3 text-sm border border-[#243329]/15 rounded-xl bg-[#F5EFE8]/60 text-[#243329] focus:outline-none focus:ring-1 focus:ring-[#C4322B]/30 transition-all"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#243329]/40">Fecha hasta</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate || undefined}
                 className="h-9 px-3 text-sm border border-[#243329]/15 rounded-xl bg-[#F5EFE8]/60 text-[#243329] focus:outline-none focus:ring-1 focus:ring-[#C4322B]/30 transition-all"
               />
             </div>
@@ -430,7 +452,7 @@ export function SurveyDashboard() {
               <div className="flex items-center gap-2 h-9">
                 <span className="text-xs text-[#243329]/50">{filtered.length} {filtered.length === 1 ? 'resultado' : 'resultados'}</span>
                 {hasFilters && (
-                  <button onClick={() => { setFilterOrigin('all'); setFilterQuality('all'); setFilterTime('all'); setFilterAttention('all'); setFilterComment(''); setDateExact(''); setSortBy('recent') }}
+                  <button onClick={() => { setFilterOrigin('all'); setFilterQuality('all'); setFilterTime('all'); setFilterAttention('all'); setFilterComment(''); setStartDate(''); setEndDate(''); setSortBy('recent') }}
                     className="flex items-center gap-1 text-xs text-[#243329]/50 hover:text-[#C4322B] transition-colors"
                   >
                     <X className="w-3 h-3" /> Limpiar
