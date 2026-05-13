@@ -17,10 +17,18 @@ export function DeliveryCatalog() {
 
   // Use active products from store, fall back gracefully
   const products = storeProducts.filter((p) => p.active)
-  // Sort: bebidas siempre al final, resto en orden alfabético
+  // Sort: Pizzas → No-Pizzas → Bebidas al final
   const sortedStoreCategories = [...storeCategories].sort((a, b) => {
+    // Pizzas primero
+    if (a.slug === "pizzas" && b.slug !== "pizzas") return -1
+    if (a.slug !== "pizzas" && b.slug === "pizzas") return 1
+    // No-Pizzas segundo
+    if (a.slug === "no-pizzas" && b.slug !== "no-pizzas") return -1
+    if (a.slug !== "no-pizzas" && b.slug === "no-pizzas") return 1
+    // Bebidas siempre al final
     if (a.slug === "bebidas") return 1
     if (b.slug === "bebidas") return -1
+    // Resto alfabético
     return a.label.localeCompare(b.label, "es")
   })
 
