@@ -21,40 +21,38 @@ export function RealtimeBanner({
   children,
   priority = false,
 }: RealtimeBannerProps) {
-  const { getBanner, loading } = useBannersContext()
+  const { getBanner } = useBannersContext()
   const banner = getBanner(bannerKey)
-  
-  // SIEMPRE usar fallback primero para evitar espacio vacío
-  // La imagen del banner de Supabase se aplica cuando esté disponible
   const imageUrl = banner?.image_url || fallbackUrl
 
   return (
-    <div className={cn('relative w-full overflow-hidden bg-[#2C1810]', className)} style={{ minHeight: 'max(300px, 40svh)' }}>
-      {/* Imagen SIEMPRE visible desde el primer paint - nunca opacity 0 */}
+    <section
+      className={cn(
+        // Altura FIJA desde el primer render - NUNCA depende de contenido/imagen
+        // Mobile: 100svh menos header (76px), Tablet: 640px, Desktop: 760px
+        'relative w-full overflow-hidden bg-[#2C1810]',
+        'min-h-[calc(100svh-76px)] md:min-h-[640px] lg:min-h-[760px]',
+        className
+      )}
+    >
+      {/* Imagen con fill + object-cover - ocupa SIEMPRE el 100% del contenedor */}
       <Image
         key={imageUrl}
         src={imageUrl}
         alt={alt}
-        width={1400}
-        height={700}
-        className="w-full h-auto block"
+        fill
         priority={priority}
         fetchPriority={priority ? 'high' : 'auto'}
         sizes="100vw"
-        placeholder="empty"
+        className="object-cover"
       />
-      
-      {/* Overlay de loading sutil - NO oculta la imagen, solo indica carga */}
-      {loading && (
-        <div className="absolute inset-0 bg-gradient-to-br from-[#F5EFE8]/30 via-transparent to-[#F5EFE8]/30 animate-pulse pointer-events-none z-5" />
-      )}
-      
-      {/* Children (botones, texto) siempre visibles */}
+
+      {/* Children (botones, texto) siempre visibles encima de la imagen */}
       {children && (
         <div className="absolute inset-0 z-10 flex items-end pb-8 sm:pb-12">
           {children}
         </div>
       )}
-    </div>
+    </section>
   )
 }
