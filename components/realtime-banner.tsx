@@ -27,11 +27,11 @@ export function RealtimeBanner({
 
   return (
     <section
+      id="hero"
       className={cn(
-        // Altura FIJA desde el primer render - ocupa toda la pantalla menos el header (64px = 4rem)
-        // Mobile: 100svh menos header, Desktop: mínimo 640px para que no sea demasiado chico
+        // Altura FIJA 100svh - el hero ocupa TODA la pantalla, va DETRÁS del header fixed
         'relative w-full overflow-hidden bg-[#2C1810]',
-        'min-h-[calc(100svh-4rem)] md:min-h-[640px] lg:min-h-[700px]',
+        'min-h-svh',
         className
       )}
     >

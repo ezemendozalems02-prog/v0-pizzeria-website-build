@@ -27,7 +27,7 @@ export default function SurveyLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5EFE8] flex items-center justify-center px-4">
+    <div className="min-h-screen pt-16 bg-[#F5EFE8] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
 
         {/* Brand mark */}

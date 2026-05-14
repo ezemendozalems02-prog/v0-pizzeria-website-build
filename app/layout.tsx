@@ -82,7 +82,7 @@ export default function RootLayout({
               <Header />
               <CartDrawer />
               <AddedToast />
-              <main className="pt-16">
+              <main>
                 {children}
               </main>
               <Footer />
