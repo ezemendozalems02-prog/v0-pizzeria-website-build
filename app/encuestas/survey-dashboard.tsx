@@ -3,9 +3,9 @@
 import { useEffect, useState, useMemo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { logoutSurveyPanel } from './actions'
+import { logoutSurveyPanel, clearSurveyData } from './actions'
 import {
-  X, LogOut, BarChart2, List, Download, RefreshCw, Loader2,
+  X, LogOut, BarChart2, List, Download, RefreshCw, Loader2, Trash2,
 } from 'lucide-react'
 
 /* ─── Types ──────────────────────────────────────────────────── */
@@ -363,6 +363,27 @@ export function SurveyDashboard() {
           >
             <Download className="w-3.5 h-3.5" />
             Exportar
+          </button>
+          <button
+            onClick={async () => {
+              if (!confirm('¿Estás seguro de que querés eliminar TODOS los datos de la encuesta? Esta acción no se puede deshacer.')) return
+              try {
+                const res = await clearSurveyData()
+                if (res.success) {
+                  alert('Datos eliminados correctamente.')
+                  window.location.reload()
+                } else {
+                  alert(res.error || 'Error al limpiar los datos.')
+                }
+              } catch (err) {
+                alert('Error del servidor.')
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-medium text-[#C4322B]/60 hover:text-[#C4322B] hover:bg-[#FEE8E6] border border-[#C4322B]/20 hover:border-[#C4322B]/40 transition-colors"
+            title="Eliminar todos los datos de la encuesta"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Limpiar datos
           </button>
           <button
             onClick={handleLogout}

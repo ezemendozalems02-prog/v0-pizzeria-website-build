@@ -62,3 +62,31 @@ export async function checkSurveySession(): Promise<boolean> {
   const cookieStore = await cookies()
   return cookieStore.get(SESSION_COOKIE)?.value === SESSION_VALUE
 }
+
+export async function clearSurveyData(): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Verify user is authenticated
+    const isAuth = await checkSurveySession()
+    if (!isAuth) {
+      return { success: false, error: 'No autorizado.' }
+    }
+
+    const supabase = await createClient()
+
+    // Delete all survey responses
+    const { error } = await supabase
+      .from('survey_responses')
+      .delete()
+      .neq('id', '') // Fake filter to delete all rows
+
+    if (error) {
+      console.error('[survey] clear data error:', error)
+      return { success: false, error: 'Error al limpiar los datos.' }
+    }
+
+    return { success: true }
+  } catch (err) {
+    console.error('[survey] clear data error:', err)
+    return { success: false, error: 'Error del servidor. Intentá de nuevo.' }
+  }
+}
