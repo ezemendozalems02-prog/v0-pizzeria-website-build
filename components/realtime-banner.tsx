@@ -23,26 +23,33 @@ export function RealtimeBanner({
 }: RealtimeBannerProps) {
   const { getBanner, loading } = useBannersContext()
   const banner = getBanner(bannerKey)
+  
+  // SIEMPRE usar fallback primero para evitar espacio vacío
+  // La imagen del banner de Supabase se aplica cuando esté disponible
   const imageUrl = banner?.image_url || fallbackUrl
 
-  // Para mobile y desktop usamos la misma estructura: imagen natural + children absolutos
   return (
-    <div className={cn('relative w-full overflow-hidden', className)}>
+    <div className={cn('relative w-full overflow-hidden bg-[#2C1810]', className)} style={{ minHeight: 'max(300px, 40svh)' }}>
+      {/* Imagen SIEMPRE visible desde el primer paint - nunca opacity 0 */}
+      <Image
+        key={imageUrl}
+        src={imageUrl}
+        alt={alt}
+        width={1400}
+        height={700}
+        className="w-full h-auto block"
+        priority={priority}
+        fetchPriority={priority ? 'high' : 'auto'}
+        sizes="100vw"
+        placeholder="empty"
+      />
+      
+      {/* Overlay de loading sutil - NO oculta la imagen, solo indica carga */}
       {loading && (
-        <div className="absolute inset-0 bg-gradient-to-br from-[#F5EFE8] via-[#F9F6F0] to-[#F5EFE8] animate-pulse z-10" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#F5EFE8]/30 via-transparent to-[#F5EFE8]/30 animate-pulse pointer-events-none z-5" />
       )}
-      <div style={{ opacity: loading ? 0 : 1, transition: 'opacity 0.7s' }}>
-        <Image
-          key={imageUrl}
-          src={imageUrl}
-          alt={alt}
-          width={1400}
-          height={700}
-          className="w-full h-auto block"
-          priority={priority}
-          fetchPriority={priority ? 'high' : 'auto'}
-        />
-      </div>
+      
+      {/* Children (botones, texto) siempre visibles */}
       {children && (
         <div className="absolute inset-0 z-10 flex items-end pb-8 sm:pb-12">
           {children}
