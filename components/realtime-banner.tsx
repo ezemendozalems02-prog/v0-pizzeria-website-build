@@ -27,13 +27,11 @@ export function RealtimeBanner({
 
   return (
     <section
-      id="hero"
       className={cn(
-        // Altura FIJA 100svh - el hero ocupa TODA la pantalla, va DETRÁS del header fixed
         'relative w-full overflow-hidden bg-[#2C1810]',
-        'min-h-svh',
         className
       )}
+      style={{ height: '100svh' }}
     >
       {/* Imagen con fill + object-cover - ocupa SIEMPRE el 100% del contenedor */}
       <Image
