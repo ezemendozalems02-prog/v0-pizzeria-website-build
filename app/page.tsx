@@ -1,9 +1,22 @@
 import Link from "next/link"
 import Image from "next/image"
+import { Suspense } from "react"
+import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { MapPin, Clock, ArrowRight } from "lucide-react"
 import { RealtimeBanner } from "@/components/realtime-banner"
-import { StoreContent } from "@/components/store-content"
+
+// Lazy load StoreContent to prevent blocking hero render
+const StoreContent = dynamic(() => import("@/components/store-content").then(mod => ({ default: mod.StoreContent })), {
+  loading: () => (
+    <div className="py-20 bg-background">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="h-96 bg-gradient-to-br from-[#F5EFE8] via-[#F9F6F0] to-[#F5EFE8] rounded-lg animate-pulse" />
+      </div>
+    </div>
+  ),
+  ssr: true,
+})
 
 export default function HomePage() {
   return (

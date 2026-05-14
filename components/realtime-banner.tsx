@@ -28,7 +28,9 @@ export function RealtimeBanner({
   // Para mobile y desktop usamos la misma estructura: imagen natural + children absolutos
   return (
     <div className={cn('relative w-full overflow-hidden', className)}>
-      {loading && <div className="absolute inset-0 bg-muted animate-pulse z-10" />}
+      {loading && (
+        <div className="absolute inset-0 bg-gradient-to-br from-[#F5EFE8] via-[#F9F6F0] to-[#F5EFE8] animate-pulse z-10" />
+      )}
       <div style={{ opacity: loading ? 0 : 1, transition: 'opacity 0.7s' }}>
         <Image
           key={imageUrl}
@@ -38,7 +40,7 @@ export function RealtimeBanner({
           height={700}
           className="w-full h-auto block"
           priority={priority}
-          unoptimized
+          fetchPriority={priority ? 'high' : 'auto'}
         />
       </div>
       {children && (
