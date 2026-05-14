@@ -40,6 +40,11 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
+        url: '/favicon.jpg',
+        sizes: '256x256',
+        type: 'image/jpeg',
+      },
+      {
         url: '/icon-light-32x32.png',
         media: '(prefers-color-scheme: light)',
       },
