@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { CartProvider } from '@/lib/cart-context'
 import { StoreProvider } from '@/lib/store'
 import { BannersProvider } from '@/components/banners-provider'
+import { Preloader } from '@/components/ui/preloader'
 import { Header } from '@/components/header'
 import { CartDrawer } from '@/components/cart-drawer'
 import { AddedToast } from '@/components/added-toast'
@@ -76,6 +77,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${openSans.variable} ${bricolage.variable} ${orbitron.variable} font-sans antialiased`}>
+        <Preloader />
         <BannersProvider>
           <StoreProvider>
             <CartProvider>
