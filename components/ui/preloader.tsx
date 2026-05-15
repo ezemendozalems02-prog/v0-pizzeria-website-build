@@ -49,7 +49,7 @@ export function Preloader() {
 
       <div className="pizza-icon">
         <Image
-          src="/favicon-pizza-rocket.png"
+          src="/favicon.png"
           alt="Pizza Rocket - TOTORE"
           width="96"
           height="96"
