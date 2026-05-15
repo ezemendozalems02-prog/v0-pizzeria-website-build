@@ -1,54 +1,70 @@
-'use client'
+import Image from "next/image"
+import Link from "next/link"
 
-import Image from 'next/image'
-import Link from 'next/link'
-
-const HERO_IMAGE_MOBILE =
-  'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20principal%20inicio-sgLjm1UietPhuULpK6QoJWyqFRFgFj.jpg'
-const HERO_IMAGE_DESKTOP =
-  'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20principal%20inicio-sgLjm1UietPhuULpK6QoJWyqFRFgFj.jpg'
+const HERO_IMAGE =
+  "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20principal%20inicio-sgLjm1UietPhuULpK6QoJWyqFRFgFj.jpg"
 
 export function StableHero() {
   return (
-    <section id="hero" className="relative w-full overflow-hidden bg-black">
-      {/* ━━━ MOBILE HERO ━━━ */}
-      <div className="relative block md:hidden w-full overflow-hidden bg-black" style={{ height: 'calc(100svh - 64px)' }}>
+    <>
+      {/* MOBILE HERO - object-cover fullscreen con encuadre personalizado */}
+      <section
+        className="md:hidden relative w-full overflow-hidden bg-black"
+        style={{ height: "calc(100svh - 64px)" }}
+      >
+        {/* Image - object-cover + object-position para mover encuadre vertical */}
         <Image
-          src={HERO_IMAGE_MOBILE}
-          alt="TOTORE Pizza - Fresco Auténtica"
+          src={HERO_IMAGE}
+          alt="TOTORE pizza artesanal fresca auténtica"
           fill
           priority
           fetchPriority="high"
           sizes="100vw"
-          className="object-contain object-center"
+          className="object-cover object-[center_38%]"
         />
 
-        {/* Overlay oscuro suave */}
-        <div className="absolute inset-0 bg-black/10" />
+        {/* Overlay sutil */}
+        <div className="absolute inset-0 bg-black/20 z-[1]" />
 
-        {/* Botones CTA - overlay HTML */}
-        <div className="absolute inset-x-0 bottom-0 z-20 flex justify-center gap-3 px-5 pb-8">
+        {/* Botones sobre la imagen - integrados al hero */}
+        <div
+          className="absolute bottom-0 left-0 right-0 z-20 flex justify-center gap-3 px-5"
+          style={{ paddingBottom: "calc(24px + env(safe-area-inset-bottom))" }}
+        >
           <Link
             href="/pedido-delivery"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#C4322B] px-5 py-3 text-base font-semibold text-white shadow-xl transition-all duration-300 active:scale-[0.98] hover:bg-[#a82a24]"
+            className="inline-flex items-center gap-2 rounded-md bg-[#C4322B] px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-[#a82a24] active:scale-[0.98]"
           >
-            Pedir Delivery →
+            Pedir Delivery
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M5 12h14" />
+              <path d="m12 5 7 7-7 7" />
+            </svg>
           </Link>
-
           <Link
             href="/pedido-delivery"
-            className="inline-flex items-center rounded-xl border border-white/60 bg-white/10 backdrop-blur-md px-5 py-3 text-base font-semibold text-white transition-all duration-300 hover:bg-white/20"
+            className="inline-flex items-center rounded-md border border-white/50 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-white/20 active:scale-[0.98]"
           >
-            Ver Menu
+            Ver Menú
           </Link>
         </div>
-      </div>
+      </section>
 
-      {/* ━━━ DESKTOP HERO ━━━ */}
-      <div className="relative hidden md:block w-full overflow-hidden bg-black" style={{ height: '760px' }}>
+      {/* DESKTOP HERO - object-cover fullscreen */}
+      <section className="hidden md:block relative w-full overflow-hidden bg-black h-[760px]">
         <Image
-          src={HERO_IMAGE_DESKTOP}
-          alt="TOTORE Pizza - Fresco Auténtica"
+          src={HERO_IMAGE}
+          alt="TOTORE pizza artesanal fresca auténtica"
           fill
           priority
           fetchPriority="high"
@@ -56,26 +72,41 @@ export function StableHero() {
           className="object-cover object-center"
         />
 
-        {/* Overlay oscuro */}
-        <div className="absolute inset-0 bg-black/20" />
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black/20 z-[1]" />
 
-        {/* Botones CTA - overlay HTML */}
-        <div className="absolute inset-x-0 bottom-0 z-20 flex justify-center gap-3 px-8 pb-14">
-          <Link
-            href="/pedido-delivery"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#C4322B] px-6 py-3 text-lg font-semibold text-white shadow-xl transition-all duration-300 active:scale-95 hover:bg-[#a82a24]"
-          >
-            Pedir Delivery →
-          </Link>
-
-          <Link
-            href="/pedido-delivery"
-            className="inline-flex items-center rounded-xl border border-white/60 bg-white/10 backdrop-blur-md px-6 py-3 text-lg font-semibold text-white transition-all duration-300 hover:bg-white/20"
-          >
-            Ver Menu
-          </Link>
+        {/* Botones */}
+        <div className="absolute inset-0 z-20 flex items-end justify-center pb-16">
+          <div className="flex flex-row gap-3">
+            <Link
+              href="/pedido-delivery"
+              className="inline-flex items-center gap-2 rounded-md bg-[#C4322B] px-5 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-[#a82a24] active:scale-[0.98]"
+            >
+              Pedir Delivery
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+            </Link>
+            <Link
+              href="/pedido-delivery"
+              className="inline-flex items-center rounded-md border border-white/50 bg-white/10 px-5 py-3 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-white/20 active:scale-[0.98]"
+            >
+              Ver Menú
+            </Link>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   )
 }
