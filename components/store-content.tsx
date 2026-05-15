@@ -3,16 +3,9 @@
 import { useStore } from '@/lib/store'
 import Link from 'next/link'
 import Image from 'next/image'
-import dynamic from 'next/dynamic'
 import { MapPin, Clock, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useBannersContext } from '@/components/banners-provider'
-
-// Lazy load map to prevent blocking page render
-const MapEmbed = dynamic(() => import('@/components/map-embed').then(mod => ({ default: mod.MapEmbed })), {
-  loading: () => <div className="w-full aspect-video lg:aspect-[4/3] rounded-xl bg-gradient-to-br from-[#F5EFE8] via-[#F9F6F0] to-[#F5EFE8] animate-pulse" />,
-  ssr: false,
-})
 
 export function StoreContent() {
   const { content } = useStore()
@@ -71,7 +64,16 @@ export function StoreContent() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             {/* Map */}
             <div className="aspect-video lg:aspect-[4/3] rounded-xl overflow-hidden bg-muted">
-              <MapEmbed embedUrl="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3283.7627!2d-58.5939368!3d-34.6019617!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bcb85232ffb9d7%3A0xd6df09dedb7a8f01!2sAv.+Dr.+Ricardo+Balb%C3%ADn+2916%2C+B1684+El+Palomar%2C+Provincia+de+Buenos+Aires!5e0!3m2!1ses!2sar!4v1746000000000" title="Ubicación de Totore" />
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3283.7627!2d-58.5939368!3d-34.6019617!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bcb85232ffb9d7%3A0xd6df09dedb7a8f01!2sAv.+Dr.+Ricardo+Balb%C3%ADn+2916%2C+B1684+El+Palomar%2C+Provincia+de+Buenos+Aires!5e0!3m2!1ses!2sar!4v1746000000000"
+                width="100%"
+                height="100%"
+                style={{ border: 0 } as any}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Ubicación de Totore"
+              />
             </div>
             {/* Info */}
             <div className="flex flex-col gap-6">
@@ -159,8 +161,6 @@ function FeaturedBanner({
           alt={title}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
-          loading="lazy"
-          sizes="(max-width: 768px) 100vw, 50vw"
         />
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 via-secondary/20 to-transparent" />

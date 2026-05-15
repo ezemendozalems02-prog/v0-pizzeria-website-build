@@ -21,36 +21,31 @@ export function RealtimeBanner({
   children,
   priority = false,
 }: RealtimeBannerProps) {
-  const { getBanner } = useBannersContext()
+  const { getBanner, loading } = useBannersContext()
   const banner = getBanner(bannerKey)
   const imageUrl = banner?.image_url || fallbackUrl
 
+  // Para mobile y desktop usamos la misma estructura: imagen natural + children absolutos
   return (
-    <section
-      className={cn(
-        'relative w-full overflow-hidden bg-[#2C1810]',
-        className
-      )}
-      style={{ height: '100svh' }}
-    >
-      {/* Imagen con fill + object-cover - ocupa SIEMPRE el 100% del contenedor */}
-      <Image
-        key={imageUrl}
-        src={imageUrl}
-        alt={alt}
-        fill
-        priority={priority}
-        fetchPriority={priority ? 'high' : 'auto'}
-        sizes="100vw"
-        className="object-cover"
-      />
-
-      {/* Children (botones, texto) siempre visibles encima de la imagen */}
+    <div className={cn('relative w-full overflow-hidden', className)}>
+      {loading && <div className="absolute inset-0 bg-muted animate-pulse z-10" />}
+      <div style={{ opacity: loading ? 0 : 1, transition: 'opacity 0.7s' }}>
+        <Image
+          key={imageUrl}
+          src={imageUrl}
+          alt={alt}
+          width={1400}
+          height={700}
+          className="w-full h-auto block"
+          priority={priority}
+          unoptimized
+        />
+      </div>
       {children && (
         <div className="absolute inset-0 z-10 flex items-end pb-8 sm:pb-12">
           {children}
         </div>
       )}
-    </section>
+    </div>
   )
 }

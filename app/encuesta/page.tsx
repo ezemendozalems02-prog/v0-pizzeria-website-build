@@ -122,7 +122,7 @@ export default function EncuestaPage() {
   // --- Success ---
   if (submitted) {
     return (
-      <div className="min-h-screen pt-16 bg-[#F5EFE8] flex items-center justify-center px-6">
+      <div className="min-h-screen bg-[#F5EFE8] flex items-center justify-center px-6">
         <div className="max-w-sm w-full text-center" style={{ animation: 'fadeUp 0.5s ease forwards' }}>
           <div
             className="w-20 h-20 mx-auto mb-8 rounded-full bg-[#C4322B] flex items-center justify-center"
@@ -153,7 +153,7 @@ export default function EncuestaPage() {
   const stepKey = STEPS[currentStep]
 
   return (
-    <div className="min-h-screen pt-16 bg-[#F5EFE8] flex flex-col">
+    <div className="min-h-screen bg-[#F5EFE8] flex flex-col">
       {/* Top header */}
       <header className="flex flex-col items-center pt-12 pb-6 px-6">
         <p className="font-serif text-2xl text-[#243329] tracking-wide mb-1">TOTORE</p>

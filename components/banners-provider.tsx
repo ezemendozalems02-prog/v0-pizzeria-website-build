@@ -41,8 +41,7 @@ const BannersContext = createContext<BannersContextValue>({
 
 export function BannersProvider({ children }: { children: React.ReactNode }) {
   const [banners, setBanners] = useState<Banner[]>([])
-  // Empezar con loading=false para que el hero se muestre inmediatamente con fallback
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState<ConnectionStatus>('connecting')
   // Use a ref to avoid stale closures in realtime handlers
   const channelRef = useRef<RealtimeChannel | null>(null)
@@ -50,8 +49,6 @@ export function BannersProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const client = supabase.current
-    // Marcar loading solo después del mount para no bloquear SSR/first paint
-    setLoading(true)
 
     // 1. Initial fetch — bypass Next.js cache with cache: 'no-store'
     const loadBanners = async () => {

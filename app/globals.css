@@ -102,27 +102,11 @@
     @apply border-border outline-ring/50;
   }
 
-  html, body {
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-  }
-
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
     font-size: 1rem;
     line-height: 1.6;
-    min-height: 100svh;
-  }
-
-  main {
-    margin: 0;
-    padding: 0;
-  }
-
-  img {
-    max-width: 100%;
   }
 
   /* Titulares grandes — Wellbutrin */

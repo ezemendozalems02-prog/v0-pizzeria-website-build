@@ -82,7 +82,7 @@ export default function RootLayout({
               <Header />
               <CartDrawer />
               <AddedToast />
-              <main>
+              <main className="min-h-screen pt-16">
                 {children}
               </main>
               <Footer />
