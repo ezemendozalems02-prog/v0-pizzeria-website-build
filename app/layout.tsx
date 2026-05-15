@@ -41,9 +41,9 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/favicon-t.jpg',
-        sizes: '256x256',
-        type: 'image/jpeg',
+        url: '/favicon-pizza-rocket.png',
+        sizes: '512x512',
+        type: 'image/png',
       },
       {
         url: '/icon-light-32x32.png',
