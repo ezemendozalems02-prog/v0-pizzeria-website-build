@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 interface RealtimeBannerProps {
   bannerKey: string
   fallbackUrl: string
+  initialUrl?: string  // URL pre-fetched en el servidor - evita flash en primera carga
   alt: string
   className?: string
   children?: React.ReactNode
@@ -16,20 +17,23 @@ interface RealtimeBannerProps {
 export function RealtimeBanner({
   bannerKey,
   fallbackUrl,
+  initialUrl,
   alt,
   className,
   children,
   priority = false,
 }: RealtimeBannerProps) {
-  const { getBanner, loading } = useBannersContext()
+  const { getBanner } = useBannersContext()
   const banner = getBanner(bannerKey)
-  const imageUrl = banner?.image_url || fallbackUrl
+
+  // Prioridad: URL de Supabase (realtime) → initialUrl (SSR) → fallback
+  // Si el cliente ya cargó banners, usa el de Supabase; si no, usa initialUrl del servidor
+  const imageUrl = banner?.image_url || initialUrl || fallbackUrl
 
   return (
     <div className={cn('relative w-full overflow-hidden bg-[#2C1810]', className)}>
-      {/* Imagen SIEMPRE visible desde el primer paint - sin opacity/transition */}
+      {/* Sin key dinámica - la misma URL del servidor al cliente, sin remount */}
       <Image
-        key={imageUrl}
         src={imageUrl}
         alt={alt}
         width={1400}
@@ -39,14 +43,9 @@ export function RealtimeBanner({
         fetchPriority={priority ? 'high' : 'auto'}
         quality={85}
         placeholder="empty"
+        unoptimized={imageUrl.includes('blob.vercel-storage.com')}
       />
-      
-      {/* Loading overlay sutil - NO oculta la imagen */}
-      {loading && (
-        <div className="absolute inset-0 bg-gradient-to-br from-[#F5EFE8]/20 via-transparent to-[#2C1810]/10 pointer-events-none z-[1]" />
-      )}
-      
-      {/* CTA Buttons - siempre visibles */}
+
       {children && (
         <div className="absolute inset-0 z-10 flex items-end pb-8 sm:pb-12">
           {children}
