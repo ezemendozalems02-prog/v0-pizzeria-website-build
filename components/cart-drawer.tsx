@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Minus, Plus, Trash2, X, MessageCircle, ChevronRight, MapPin } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
+import { useStore } from "@/lib/store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -49,6 +50,7 @@ export function CartDrawer() {
     isCartOpen,
     setIsCartOpen,
   } = useCart()
+  const { config } = useStore()
 
   const [showForm, setShowForm]     = useState(false)
   const [form, setForm]             = useState<OrderForm>(INITIAL_FORM)
@@ -105,6 +107,16 @@ export function CartDrawer() {
       ? `\n📝 *Observaciones:*\n${form.observaciones.trim()}\n`
       : ""
 
+    // Calcular total con cargo de envío si es delivery
+    const shippingCost = form.entrega === "delivery" ? (config?.shippingCost || 0) : 0
+    const finalTotal = totalPrice + shippingCost
+
+    // Línea de desglose si hay cargo de envío
+    let desgloseLine = ""
+    if (shippingCost > 0) {
+      desgloseLine = `\nSubtotal: ${formatPrice(totalPrice)}\n🚚 Cargo envío: +${formatPrice(shippingCost)}`
+    }
+
     const message = [
       `🍕 *NUEVO PEDIDO — TOTORE*`,
       ``,
@@ -121,7 +133,7 @@ export function CartDrawer() {
       ``,
       sep,
       ``,
-      `💰 *TOTAL: ${formatPrice(totalPrice)}*`,
+      `💰 *TOTAL: ${formatPrice(finalTotal)}*${desgloseLine}`,
       ``,
       `Gracias 🙌`,
     ].join("\n")
@@ -396,9 +408,26 @@ export function CartDrawer() {
 
             {/* Footer */}
             <div className="border-t border-[#E8E0D5] bg-[#FAF7F2] px-6 py-5 space-y-3">
+              {/* Total breakdown */}
+              <div className="space-y-2 pb-3 border-b border-[#E8E0D5]/50">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="font-medium">{formatPrice(totalPrice)}</span>
+                </div>
+                {form.entrega === "delivery" && config?.shippingCost ? (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">🚚 Cargo por envío</span>
+                    <span className="font-medium text-primary">+{formatPrice(config.shippingCost)}</span>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Final total */}
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Total del pedido</span>
-                <span className="text-lg font-bold text-primary">{formatPrice(totalPrice)}</span>
+                <span className="text-base font-semibold text-foreground">Total del pedido</span>
+                <span className="text-2xl font-bold text-primary">
+                  {formatPrice(totalPrice + (form.entrega === "delivery" ? (config?.shippingCost || 0) : 0))}
+                </span>
               </div>
 
               <button

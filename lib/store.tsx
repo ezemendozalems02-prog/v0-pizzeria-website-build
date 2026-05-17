@@ -142,6 +142,7 @@ interface StoreContextType {
   addCategory: (category: StoreCategory) => void
   updateCategory: (category: StoreCategory) => void
   deleteCategory: (id: string) => void
+  setConfig: (config: SiteConfig) => void
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined)
@@ -151,7 +152,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [categories, setCategories] = useState<StoreCategory[]>(initialCategories)
   const [banners] = useState<Banner[]>(initialBanners)
   const [content, setContent] = useState<SiteContent>(initialContent)
-  const [config] = useState<SiteConfig>(initialConfig)
+  const [config, setConfigState] = useState<SiteConfig>(initialConfig)
   const [loading, setLoading] = useState(true)
 
   const supabase = createClient()
@@ -318,6 +319,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setCategories((prev) => prev.filter((c) => c.id !== id))
   }, [])
 
+  const setConfig = useCallback((newConfig: SiteConfig) => {
+    setConfigState(newConfig)
+  }, [])
+
   return (
     <StoreContext.Provider
       value={{
@@ -333,6 +338,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         addCategory,
         updateCategory,
         deleteCategory,
+        setConfig,
       }}
     >
       {children}
