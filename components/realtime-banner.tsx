@@ -25,22 +25,28 @@ export function RealtimeBanner({
   const banner = getBanner(bannerKey)
   const imageUrl = banner?.image_url || fallbackUrl
 
-  // Para mobile y desktop usamos la misma estructura: imagen natural + children absolutos
   return (
-    <div className={cn('relative w-full overflow-hidden', className)}>
-      {loading && <div className="absolute inset-0 bg-muted animate-pulse z-10" />}
-      <div style={{ opacity: loading ? 0 : 1, transition: 'opacity 0.7s' }}>
-        <Image
-          key={imageUrl}
-          src={imageUrl}
-          alt={alt}
-          width={1400}
-          height={700}
-          className="w-full h-auto block"
-          priority={priority}
-          unoptimized
-        />
-      </div>
+    <div className={cn('relative w-full overflow-hidden bg-[#2C1810]', className)}>
+      {/* Imagen SIEMPRE visible desde el primer paint - sin opacity/transition */}
+      <Image
+        key={imageUrl}
+        src={imageUrl}
+        alt={alt}
+        width={1400}
+        height={700}
+        className="w-full h-auto block"
+        priority={priority}
+        fetchPriority={priority ? 'high' : 'auto'}
+        quality={85}
+        placeholder="empty"
+      />
+      
+      {/* Loading overlay sutil - NO oculta la imagen */}
+      {loading && (
+        <div className="absolute inset-0 bg-gradient-to-br from-[#F5EFE8]/20 via-transparent to-[#2C1810]/10 pointer-events-none z-[1]" />
+      )}
+      
+      {/* CTA Buttons - siempre visibles */}
       {children && (
         <div className="absolute inset-0 z-10 flex items-end pb-8 sm:pb-12">
           {children}
