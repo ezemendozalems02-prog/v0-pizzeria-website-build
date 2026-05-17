@@ -98,6 +98,22 @@ export default function ConfiguracionPage() {
         </Field>
       </Section>
 
+      {/* Shipping Cost */}
+      <Section title="Cargo por Envío">
+        <Field label="Monto del cargo (en pesos)" hint="Se sumará al total cuando se seleccione Delivery">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-admin-text">$</span>
+            <Input
+              type="number"
+              value={form.shippingCost}
+              onChange={(e) => set("shippingCost", Number(e.target.value))}
+              placeholder="1000"
+              className="bg-admin-bg border-admin-border text-admin-text font-mono"
+            />
+          </div>
+        </Field>
+      </Section>
+
       {/* Footer */}
       <Section title="Footer del sitio">
         <Field label="Texto del footer">
