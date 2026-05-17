@@ -1,131 +1,60 @@
 import Link from "next/link"
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { MapPin, Clock, ArrowRight } from "lucide-react"
-import { RealtimeBanner } from "@/components/realtime-banner"
+import { ArrowRight } from "lucide-react"
 import { StoreContent } from "@/components/store-content"
+
+const HERO_IMAGE = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20principal%20inicio-sgLjm1UietPhuULpK6QoJWyqFRFgFj.jpg"
 
 export default function HomePage() {
   return (
     <>
-      {/* Hero Section */}
-      <RealtimeBanner
-        bannerKey="home"
-        fallbackUrl="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/banner%20principal%20inicio-sgLjm1UietPhuULpK6QoJWyqFRFgFj.jpg"
-        alt="Pizza napolitana artesanal - TOTORE fresco, auténtica"
-        priority
+      {/* Pure Hero - No dependencies, renders immediately */}
+      <section
+        className="relative w-full overflow-hidden bg-black"
+        style={{ height: "100svh" }}
       >
-        <div className="w-full px-4 sm:px-8 pb-6 sm:pb-10">
-          <div className="flex flex-row gap-3">
-            <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
-              <Link href="/pedido-delivery">
-                Pedir Delivery
-                <ArrowRight className="ml-2 h-3 w-3" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm" className="bg-background/20 backdrop-blur-sm border-white/40 text-white hover:bg-white/20 shadow-lg">
-              <Link href="/pedido-delivery">
-                Ver Menú
-              </Link>
-            </Button>
+        {/* Image - fill + object-cover for fullscreen, priority for fast load */}
+        <Image
+          src={HERO_IMAGE}
+          alt="TOTORE pizza artesanal fresca auténtica"
+          fill
+          priority
+          fetchPriority="high"
+          sizes="100vw"
+          quality={85}
+          className="object-cover object-center"
+          style={{
+            objectFit: "cover",
+            objectPosition: "center",
+            backgroundColor: "#000",
+          }}
+        />
+
+        {/* Overlay - subtle dark overlay */}
+        <div className="absolute inset-0 bg-black/15 z-[1]" />
+
+        {/* CTA Buttons - bottom center */}
+        <div className="absolute inset-0 z-20 flex items-end justify-center pb-12">
+          <div className="flex flex-row gap-3 px-5 flex-wrap justify-center">
+            <Link
+              href="/pedido-delivery"
+              className="inline-flex items-center gap-2 rounded-md bg-[#C4322B] px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-[#a82a24] active:scale-[0.98]"
+            >
+              Pedir Delivery
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+            <Link
+              href="/pedido-delivery"
+              className="inline-flex items-center rounded-md border border-white/50 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-white/20 active:scale-[0.98]"
+            >
+              Ver Menú
+            </Link>
           </div>
         </div>
-      </RealtimeBanner>
+      </section>
 
       {/* Experience Section */}
       <StoreContent />
     </>
-  )
-}
-
-function ExperienceCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode
-  title: string
-  description: string
-}) {
-  return (
-    <div className="bg-card rounded-xl p-6 border border-border hover:border-primary/30 transition-colors">
-      <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
-        {icon}
-      </div>
-      <h3 className="font-display text-xl font-semibold text-foreground mb-2 tracking-tight">
-        {title}
-      </h3>
-      <p className="text-muted-foreground leading-relaxed">
-        {description}
-      </p>
-    </div>
-  )
-}
-
-function FeaturedBanner({
-  image,
-  title,
-  href,
-}: {
-  image: string
-  title: string
-  href: string
-}) {
-  return (
-    <Link href={href} className="group relative aspect-[4/3] sm:aspect-[16/9] rounded-xl overflow-hidden block">
-      <Image
-        src={image}
-        alt={title}
-        fill
-        className="object-cover transition-transform duration-500 group-hover:scale-105"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-secondary/80 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-        <h3 className="font-display text-lg sm:text-2xl font-bold text-primary-foreground mb-2 sm:mb-3 tracking-widest uppercase">
-          {title}
-        </h3>
-        <span className="inline-flex items-center text-xs sm:text-sm font-medium text-primary-foreground/90 group-hover:text-primary-foreground transition-colors">
-          Ver Menú
-          <ArrowRight className="ml-2 h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
-        </span>
-      </div>
-    </Link>
-  )
-}
-
-function PizzaIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M15 11h.01" />
-      <path d="M11 15h.01" />
-      <path d="M16 16h.01" />
-      <path d="m2 16 20 6-6-20A20 20 0 0 0 2 16" />
-      <path d="M5.71 17.11a17.04 17.04 0 0 1 11.4-11.4" />
-    </svg>
-  )
-}
-
-function DeliveryIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <circle cx="6" cy="19" r="3" />
-      <path d="M9 19h6" />
-      <circle cx="18" cy="19" r="3" />
-      <path d="M3 7v5h2l2-5H3z" />
-      <path d="M18 7h-3l-2 5h5" />
-      <path d="M12 12V7" />
-    </svg>
-  )
-}
-
-function ShareIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M17 11h1a3 3 0 0 1 0 6h-1" />
-      <path d="M9 12v6" />
-      <path d="M13 12v6" />
-      <path d="M14 7.5c-1 0-1.44.5-3 .5s-2-.5-3-.5-1.72.5-2.5.5a2.5 2.5 0 0 1 0-5c.78 0 1.57.5 2.5.5S9.44 2 11 2s2 1.5 3 1.5 1.72-.5 2.5-.5a2.5 2.5 0 0 1 0 5c-.78 0-1.5-.5-2.5-.5Z" />
-      <path d="M5 8v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8" />
-    </svg>
   )
 }
