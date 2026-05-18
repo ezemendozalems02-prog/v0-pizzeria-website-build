@@ -44,8 +44,8 @@ export default function ContactPage() {
                 <ContactInfoCard
                   icon={<Instagram className="w-6 h-6 text-primary" />}
                   label="Instagram"
-                  value="@totore.pizza"
-                  href="https://instagram.com/totore.pizza"
+                  value="@totorepizza"
+                  href="https://www.instagram.com/totorepizza/"
                 />
                 <ContactInfoCard
                   icon={<MapPin className="w-6 h-6 text-primary" />}

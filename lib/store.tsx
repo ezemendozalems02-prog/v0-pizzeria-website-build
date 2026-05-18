@@ -121,7 +121,7 @@ const initialConfig: SiteConfig = {
   whatsapp: "+5491234567890",
   address: "San Martín 123, CABA",
   hours: "Lun-Dom 20:00-00:00",
-  instagram: "@totore_pizzeria",
+  instagram: "https://www.instagram.com/totorepizza/",
   footerText: "Pizza estilo italiana en Ciudad Jardín",
   mapEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3283.7627!2d-58.5939368!3d-34.6019617!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bcb85232ffb9d7%3A0xd6df09dedb7a8f01!2sAv.+Dr.+Ricardo+Balb%C3%ADn+2916%2C+B1684+El+Palomar%2C+Provincia+de+Buenos+Aires!5e0!3m2!1ses!2sar!4v1746000000000",
   shippingCost: 1000,
