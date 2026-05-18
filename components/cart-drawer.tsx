@@ -88,6 +88,7 @@ export function CartDrawer() {
 
   const buildMessage = (): string => {
     const sep = "━━━━━━━━━━━━━━━"
+    const lineSep = "─────────────────"
 
     const productos = items
       .map((item) => `• ${item.quantity}x ${item.name} — ${formatPrice(item.price * item.quantity)}`)
@@ -111,10 +112,19 @@ export function CartDrawer() {
     const shippingCost = form.entrega === "delivery" ? (config?.shippingCost || 0) : 0
     const finalTotal = totalPrice + shippingCost
 
-    // Línea de desglose si hay cargo de envío
-    let desgloseLine = ""
+    // Desglose de precios separado y bien formateado
+    let preciosSection = ""
     if (shippingCost > 0) {
-      desgloseLine = `\nSubtotal: ${formatPrice(totalPrice)}\n🚚 Cargo envío: +${formatPrice(shippingCost)}`
+      preciosSection = `
+${lineSep}
+Subtotal:          ${formatPrice(totalPrice)}
+🚚 Cargo envío:    +${formatPrice(shippingCost)}
+${lineSep}
+*💰 TOTAL:         ${formatPrice(finalTotal)}*`
+    } else {
+      preciosSection = `
+${lineSep}
+*💰 TOTAL:         ${formatPrice(finalTotal)}*`
     }
 
     const message = [
@@ -131,9 +141,7 @@ export function CartDrawer() {
       ``,
       productos,
       ``,
-      sep,
-      ``,
-      `💰 *TOTAL: ${formatPrice(finalTotal)}*${desgloseLine}`,
+      preciosSection,
       ``,
       `Gracias 🙌`,
     ].join("\n")
