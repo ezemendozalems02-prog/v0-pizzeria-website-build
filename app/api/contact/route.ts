@@ -3,14 +3,17 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+const EMAIL_TO = 'crumbsrhh@gmail.com'
+const EMAIL_FROM = 'Totore <contacto@totore.com.ar>'
+
 export async function POST(req: NextRequest) {
   try {
-    const { nombre, email, telefono, mensaje } = await req.json()
+    const { nombre, email, telefono, asunto, mensaje } = await req.json()
 
     // Validación server-side
-    if (!nombre?.trim() || !email?.trim() || !mensaje?.trim()) {
+    if (!nombre?.trim() || !email?.trim() || !asunto?.trim() || !mensaje?.trim()) {
       return NextResponse.json(
-        { error: 'Nombre, email y mensaje son obligatorios.' },
+        { error: 'Nombre, email, asunto y mensaje son obligatorios.' },
         { status: 400 }
       )
     }
@@ -23,16 +26,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const destinatario = process.env.CONTACT_EMAIL || 'info@totore.com.ar'
-
     await resend.emails.send({
-      from: 'Totore Contacto <noreply@totore.com.ar>',
-      to: destinatario,
+      from: EMAIL_FROM,
+      to: EMAIL_TO,
       replyTo: email.trim(),
-      subject: `Nuevo mensaje de contacto — ${nombre.trim()}`,
+      subject: `[Totore] ${asunto.trim()} — ${nombre.trim()}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9f7f4; padding: 32px; border-radius: 12px;">
-          <div style="background: #243329; padding: 20px 28px; border-radius: 8px 8px 0 0; margin-bottom: 0;">
+          <div style="background: #243329; padding: 20px 28px; border-radius: 8px 8px 0 0;">
             <h1 style="color: #f0e9de; margin: 0; font-size: 22px; letter-spacing: 1px;">TOTORE</h1>
             <p style="color: #a8b5a2; margin: 4px 0 0 0; font-size: 13px;">Nuevo mensaje del formulario de contacto</p>
           </div>
@@ -64,6 +65,14 @@ export async function POST(req: NextRequest) {
                   ${telefono.trim()}
                 </td>
               </tr>` : ''}
+              <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0ebe3;">
+                  <strong style="color: #6b5a4e; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Asunto</strong>
+                </td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #f0ebe3; color: #243329; font-size: 15px;">
+                  ${asunto.trim()}
+                </td>
+              </tr>
               <tr>
                 <td colspan="2" style="padding: 16px 0 4px 0;">
                   <strong style="color: #6b5a4e; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Mensaje</strong>

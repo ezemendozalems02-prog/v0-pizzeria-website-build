@@ -12,6 +12,7 @@ export function ContactForm() {
   const [nombre, setNombre] = useState('')
   const [email, setEmail] = useState('')
   const [telefono, setTelefono] = useState('')
+  const [asunto, setAsunto] = useState('')
   const [mensaje, setMensaje] = useState('')
   const [status, setStatus] = useState<Status>('idle')
   const [errorMsg, setErrorMsg] = useState('')
@@ -25,7 +26,7 @@ export function ContactForm() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, email, telefono, mensaje }),
+        body: JSON.stringify({ nombre, email, telefono, asunto, mensaje }),
       })
 
       const data = await res.json()
@@ -40,6 +41,7 @@ export function ContactForm() {
       setNombre('')
       setEmail('')
       setTelefono('')
+      setAsunto('')
       setMensaje('')
     } catch {
       setErrorMsg('No se pudo conectar. Verificá tu conexión e intentá de nuevo.')
@@ -111,6 +113,20 @@ export function ContactForm() {
           onChange={(e) => setTelefono(e.target.value)}
           placeholder="11 1234-5678"
           className="bg-background border-border focus:border-primary"
+          disabled={status === 'loading'}
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Asunto <span className="text-primary">*</span>
+        </label>
+        <Input
+          value={asunto}
+          onChange={(e) => setAsunto(e.target.value)}
+          placeholder="Ej: Consulta sobre eventos"
+          className="bg-background border-border focus:border-primary"
+          required
           disabled={status === 'loading'}
         />
       </div>
