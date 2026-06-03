@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import Image from "next/image"
-import { Search, ShoppingCart } from "lucide-react"
+import { Search, ShoppingCart, Plus } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/lib/cart-context"
@@ -208,25 +208,29 @@ function ProductCard({
 
       {/* Product Info */}
       <div className="p-4 flex flex-col flex-1">
+        {/* Name and Description */}
         <div className="flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-serif text-lg font-semibold text-foreground leading-tight">
-              {product.name}
-            </h3>
-            <span className="text-primary font-bold whitespace-nowrap text-sm mt-0.5">
-              {formatPrice(product.price)}
-            </span>
-          </div>
-          <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
+          <h3 className="font-serif text-base sm:text-lg font-semibold text-foreground leading-tight">
+            {product.name}
+          </h3>
+          <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-tight">
             {product.description}
           </p>
         </div>
-        <Button
-          onClick={onAdd}
-          className="mt-4 w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-        >
-          Agregar
-        </Button>
+
+        {/* Price and Button - Bottom */}
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <span className="text-primary font-bold text-base sm:text-lg">
+            {formatPrice(product.price)}
+          </span>
+          <Button
+            onClick={onAdd}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-10 w-10 p-0 flex items-center justify-center flex-shrink-0"
+            title="Agregar al carrito"
+          >
+            <Plus className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
     </div>
   )
