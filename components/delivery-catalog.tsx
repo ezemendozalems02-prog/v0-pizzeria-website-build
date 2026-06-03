@@ -146,7 +146,7 @@ export function DeliveryCatalog() {
                   <h2 className="font-serif text-2xl font-bold text-foreground mb-6">
                     {cat.label}
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {catProducts.map((product) => (
                       <ProductCard
                         key={product.id}
@@ -196,7 +196,7 @@ function ProductCard({
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden flex flex-col hover:border-primary/30 transition-colors group">
       {/* Product Image */}
-      <div className="relative w-full aspect-[4/3] overflow-hidden bg-muted">
+      <div className="relative w-full aspect-square sm:aspect-[4/3] overflow-hidden bg-muted">
         <Image
           src={product.image}
           alt={product.name}
