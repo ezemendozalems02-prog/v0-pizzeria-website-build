@@ -30,6 +30,5 @@ insert into public.config (key, value, type) values
   ('whatsapp_number', '+54 9 11 1234-5678', 'string'),
   ('address', 'Av. Principal 123, Buenos Aires, Argentina', 'string'),
   ('hours', 'Lun-Dom: 12:00 - 23:00', 'string'),
-  ('instagram', 'https://instagram.com/totore', 'string'),
-  ('email', 'contacto@totore.com', 'string')
+  ('instagram', 'https://instagram.com/totore', 'string')
 on conflict (key) do nothing;

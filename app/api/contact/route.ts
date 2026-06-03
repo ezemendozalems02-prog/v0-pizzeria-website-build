@@ -3,11 +3,17 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-const EMAIL_TO = 'crumbsrhh@gmail.com'
+const EMAIL_TO = process.env.CONTACT_EMAIL || ''
 const EMAIL_FROM = 'Totore <contacto@totore.com.ar>'
 
 export async function POST(req: NextRequest) {
   try {
+    if (!EMAIL_TO) {
+      return NextResponse.json(
+        { error: 'Error de configuración del servidor.' },
+        { status: 500 }
+      )
+    }
     const formData = await req.formData()
 
     const nombre  = formData.get('nombre')?.toString().trim() ?? ''
