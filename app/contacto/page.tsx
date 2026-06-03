@@ -68,13 +68,13 @@ export default function ContactPage() {
               </Button>
             </div>
 
-            {/* Right Column - Contact Form */}
+            {/* Right Column - Work Form */}
             <div className="bg-muted rounded-xl p-8">
               <h3 className="font-display text-2xl font-bold text-foreground mb-2 tracking-tight">
-                Envianos un mensaje
+                Trabaja con nosotros
               </h3>
               <p className="text-muted-foreground mb-6">
-                Completá el formulario y te responderemos a la brevedad.
+                Si te gustaría trabajar en un ambiente cálido, dinámico y con mucha onda, nos encantaría conocerte.
               </p>
 
               <ContactForm />
