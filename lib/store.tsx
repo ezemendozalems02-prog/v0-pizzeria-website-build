@@ -119,7 +119,7 @@ const initialContent: SiteContent = {
 
 const initialConfig: SiteConfig = {
   whatsapp: "+5491234567890",
-  address: "San Martín 123, CABA",
+  address: "Balbín 2916, El Palomar, Buenos Aires",
   hours: "Lun-Dom 20:00-00:00",
   instagram: "https://www.instagram.com/totorepizza/",
   footerText: "Pizza estilo italiana en Ciudad Jardín",
