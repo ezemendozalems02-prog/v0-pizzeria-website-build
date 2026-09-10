@@ -142,7 +142,7 @@ interface StoreContextType {
   addCategory: (category: StoreCategory) => void
   updateCategory: (category: StoreCategory) => void
   deleteCategory: (id: string) => void
-  setConfig: (config: SiteConfig) => void
+  setConfig: (config: SiteConfig) => Promise<void>
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined)
@@ -162,8 +162,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     loadCategories()
     loadProducts()
     loadContent()
+    loadConfig()
     subscribeToProductsChanges()
     subscribeToContentChanges()
+    subscribeToConfigChanges()
   }, [])
 
   const loadCategories = async () => {
@@ -251,6 +253,36 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const loadConfig = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("site_config")
+        .select("*")
+        .eq("id", "main")
+        .single()
+
+      if (error) {
+        console.error("[Store] Error loading config:", error)
+        return
+      }
+
+      if (data) {
+        setConfigState({
+          whatsapp: data.whatsapp,
+          address: data.address,
+          hours: data.hours,
+          instagram: data.instagram,
+          footerText: data.footer_text,
+          mapEmbedUrl: data.map_embed_url,
+          shippingCost: Number(data.shipping_cost) || 0,
+        })
+        console.log("[Store] Config loaded from DB")
+      }
+    } catch (err) {
+      console.error("[Store] Unexpected error loading config:", err)
+    }
+  }
+
   const subscribeToProductsChanges = () => {
     const subscription = supabase
       .channel("products-changes")
@@ -295,6 +327,28 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const subscribeToConfigChanges = () => {
+    const subscription = supabase
+      .channel("config-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "site_config",
+        },
+        (payload: any) => {
+          console.log("[Store] Realtime config update detected:", payload.eventType)
+          loadConfig()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }
+
   const addProduct = useCallback((product: StoreProduct) => {
     setProducts((prev) => [...prev, product])
   }, [])
@@ -319,9 +373,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setCategories((prev) => prev.filter((c) => c.id !== id))
   }, [])
 
-  const setConfig = useCallback((newConfig: SiteConfig) => {
-    setConfigState(newConfig)
-  }, [])
+  const setConfig = useCallback(
+    async (newConfig: SiteConfig) => {
+      const { error } = await supabase.from("site_config").upsert(
+        {
+          id: "main",
+          whatsapp: newConfig.whatsapp,
+          address: newConfig.address,
+          hours: newConfig.hours,
+          instagram: newConfig.instagram,
+          footer_text: newConfig.footerText,
+          map_embed_url: newConfig.mapEmbedUrl,
+          shipping_cost: newConfig.shippingCost,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      )
+
+      if (error) {
+        console.error("[Store] Error saving config:", error)
+        throw error
+      }
+
+      setConfigState(newConfig)
+    },
+    [supabase]
+  )
 
   return (
     <StoreContext.Provider

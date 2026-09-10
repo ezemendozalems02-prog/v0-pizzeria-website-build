@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { CheckCircle } from "lucide-react"
+import { useState, useEffect } from "react"
+import { CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,16 +11,31 @@ import { useStore, type SiteConfig } from "@/lib/store"
 export default function ConfiguracionPage() {
   const { config, setConfig } = useStore()
   const [form, setForm] = useState<SiteConfig>(config)
+  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Sincronizar el formulario cuando la config se termina de cargar desde la DB
+  useEffect(() => {
+    setForm(config)
+  }, [config])
 
   function set<K extends keyof SiteConfig>(key: K, value: SiteConfig[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
-  function handleSave() {
-    setConfig(form)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+  async function handleSave() {
+    try {
+      setSaving(true)
+      setError(null)
+      await setConfig(form)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch (err: any) {
+      setError(err.message || "No se pudo guardar la configuración")
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -40,6 +55,13 @@ export default function ConfiguracionPage() {
           </div>
         )}
       </div>
+
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-800 text-sm">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          {error}
+        </div>
+      )}
 
       {/* Contact */}
       <Section title="Contacto y Ubicación">
@@ -128,9 +150,11 @@ export default function ConfiguracionPage() {
 
       <Button
         onClick={handleSave}
-        className="bg-primary hover:bg-primary/90 text-white w-fit"
+        disabled={saving}
+        className="bg-primary hover:bg-primary/90 text-white w-fit gap-2"
       >
-        Guardar configuración
+        {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+        {saving ? "Guardando..." : "Guardar configuración"}
       </Button>
     </div>
   )
